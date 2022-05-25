@@ -3,20 +3,12 @@ package main
 import (
 	"fmt"
 	"github.com/smallretardedfish/go-chat/configs"
+	"github.com/smallretardedfish/go-chat/internal/repositories/message_repo"
+	"github.com/smallretardedfish/go-chat/internal/repositories/room_repo"
 	"github.com/smallretardedfish/go-chat/internal/repositories/user_repo"
-	"gorm.io/driver/postgres"
-	"gorm.io/gorm"
 	"log"
+	"time"
 )
-
-func NewDb(dsn string) (*gorm.DB, error) {
-	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
-	if err != nil {
-		log.Println(err)
-		return nil, err
-	}
-	return db, nil
-}
 
 func main() {
 	cfg, err := configs.NewConfig()
@@ -24,31 +16,46 @@ func main() {
 		log.Fatal(err)
 	}
 
-	db, err := NewDb(cfg.DSN)
+	db, err := configs.NewDB(cfg.DSN)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	userRepo := user_repo.NewUserRepo(db)
+	//userRepo := user_repo.NewUserRepo(db)
+	messageRepo := message_repo.NewMessageRepo(db)
+	roomRepo := room_repo.NewRoomRepo(db)
+
 	if err := db.AutoMigrate(user_repo.User{}); err != nil {
 		log.Println(err)
 		return
 	}
-	//db.AutoMigrate(message_repo.Message{})
-	//db.AutoMigrate(room_repo.Room{})
-
-	//u := user_repo.User{
-	//	Name:      "John",
-	//	CreatedAt: time.Now(),
-	//}
-
-	//user, err := userRepo.CreateUser(u)
-	user, err := userRepo.GetUser(1)
-	if err != nil {
+	if err := db.AutoMigrate(room_repo.Room{}); err != nil {
 		log.Println(err)
 		return
 	}
-
-	fmt.Println(user.UpdatedAt)
-	// Tests
+	if err := db.AutoMigrate(message_repo.Message{}); err != nil {
+		log.Println(err)
+		return
+	}
+	r := room_repo.Room{
+		Name:    "first_chat",
+		OwnerID: 1,
+		//Type:      1,
+		CreatedAt: time.Now(),
+	}
+	m := message_repo.Message{
+		Text:      "hello guys",
+		OwnerID:   1,
+		RoomID:    1,
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	}
+	if _, err := roomRepo.CreateRoom(r); err != nil {
+		log.Println(fmt.Errorf("error while creating room:%v", err))
+		return
+	}
+	if _, err := messageRepo.CreateMessage(m); err != nil {
+		log.Println(fmt.Errorf("error while creating room:%v", err))
+		return
+	}
 }

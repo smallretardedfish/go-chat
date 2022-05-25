@@ -11,42 +11,43 @@ type UserRepo interface {
 	UpdateUserCredentials(userCredentials UserCredentials) (*UserCredentials, error)
 }
 
-type UserRepoImpl struct {
+type UserRepoPG struct {
 	db *gorm.DB
 }
 
-func (u UserRepoImpl) GetUser(userID int64) (*User, error) {
+func (u UserRepoPG) GetUser(userID int64) (*User, error) {
+	user := User{}
+	res := u.db.First(&user, userID)
+	return &user, res.Error
+}
+
+func (u UserRepoPG) GetUsers(initiatorUserID int64, userFilter *UserFilter) ([]User, error) {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (u UserRepoImpl) GetUsers(initiatorUserID int64, userFilter *UserFilter) ([]User, error) {
+func (u UserRepoPG) GetUserCredentials(userID int64) (*UserCredentials, error) {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (u UserRepoImpl) GetUserCredentials(userID int64) (*UserCredentials, error) {
+func (u UserRepoPG) CreateUser(user User) (*User, error) {
+	res := u.db.Create(&user)
+	return &user, res.Error
+}
+
+func (u UserRepoPG) CreateUserCredentials(userCredentials UserCredentials) (*UserCredentials, error) {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (u UserRepoImpl) CreateUser(user User) (*User, error) {
+func (u UserRepoPG) UpdateUserCredentials(userCredentials UserCredentials) (*UserCredentials, error) {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (u UserRepoImpl) CreateUserCredentials(userCredentials UserCredentials) (*UserCredentials, error) {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (u UserRepoImpl) UpdateUserCredentials(userCredentials UserCredentials) (*UserCredentials, error) {
-	//TODO implement me
-	panic("implement me")
-}
-
-func NewUserRepo(db *gorm.DB) *UserRepoImpl {
-	return &UserRepoImpl{
+func NewUserRepo(db *gorm.DB) *UserRepoPG {
+	return &UserRepoPG{
 		db: db,
 	}
 }

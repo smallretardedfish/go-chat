@@ -25,8 +25,8 @@ func (r RoomRepoImpl) GetRooms(userID int64) ([]Room, error) {
 }
 
 func (r RoomRepoImpl) CreateRoom(room Room) (*Room, error) {
-	//TODO implement me
-	panic("implement me")
+	res := r.db.Create(&room)
+	return &room, res.Error
 }
 
 func (r RoomRepoImpl) UpdateRoom(userID int64, room Room) (*Room, error) {

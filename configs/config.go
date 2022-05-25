@@ -8,7 +8,7 @@ import (
 
 type Config struct {
 	ServerAddress string `env:"HTTP_SERVER_ADDRESS" envDefault:"http://0.0.0.0:8080"`
-	DSN           string `env:"DB_DSN" envDefault:"host=0.0.0.0 user=postgres password=postgres dbname=chat port=5432 sslmode=disable"`
+	DSN           string `env:"DB_DSN" envDefault:"host=0.0.0.0 user=postgres password=mysecretpassword dbname=chatdb port=5432 sslmode=disable"`
 }
 
 func (c *Config) GetServerAddress() (*url.URL, error) {
