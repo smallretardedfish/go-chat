@@ -1,7 +1,7 @@
 package room_repo
 
 import (
-	"github.com/smallretardedfish/go-chat/repositories/user_repo"
+	"github.com/smallretardedfish/go-chat/internal/repositories/user_repo"
 	"time"
 )
 
