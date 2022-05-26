@@ -5,7 +5,7 @@
 !/tmp/.keep
 
 # IDE config files
-.idea
+.idea/
 .vscode
 .DS_Store
 

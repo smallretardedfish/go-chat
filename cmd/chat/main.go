@@ -5,7 +5,6 @@ import (
 	"github.com/smallretardedfish/go-chat/configs"
 	"github.com/smallretardedfish/go-chat/internal/repositories/message_repo"
 	"github.com/smallretardedfish/go-chat/internal/repositories/room_repo"
-	"github.com/smallretardedfish/go-chat/internal/repositories/user_repo"
 	"log"
 	"time"
 )
@@ -25,18 +24,6 @@ func main() {
 	messageRepo := message_repo.NewMessageRepo(db)
 	roomRepo := room_repo.NewRoomRepo(db)
 
-	if err := db.AutoMigrate(user_repo.User{}); err != nil {
-		log.Println(err)
-		return
-	}
-	if err := db.AutoMigrate(room_repo.Room{}); err != nil {
-		log.Println(err)
-		return
-	}
-	if err := db.AutoMigrate(message_repo.Message{}); err != nil {
-		log.Println(err)
-		return
-	}
 	r := room_repo.Room{
 		Name:    "first_chat",
 		OwnerID: 1,
