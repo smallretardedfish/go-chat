@@ -22,13 +22,13 @@ func (u UserRepoPG) GetUser(userID int64) (*User, error) {
 }
 
 func (u UserRepoPG) GetUsers(initiatorUserID int64, userFilter *UserFilter) ([]User, error) {
-	//TODO implement me
 	panic("implement me")
 }
 
 func (u UserRepoPG) GetUserCredentials(userID int64) (*UserCredentials, error) {
-	//TODO implement me
-	panic("implement me")
+	userCredentials := UserCredentials{}
+	res := u.db.Model(UserCredentials{}).First(&userCredentials, userID)
+	return &userCredentials, res.Error
 }
 
 func (u UserRepoPG) CreateUser(user User) (*User, error) {
@@ -37,13 +37,13 @@ func (u UserRepoPG) CreateUser(user User) (*User, error) {
 }
 
 func (u UserRepoPG) CreateUserCredentials(userCredentials UserCredentials) (*UserCredentials, error) {
-	//TODO implement me
-	panic("implement me")
+	res := u.db.Create(&userCredentials)
+	return &userCredentials, res.Error
 }
 
 func (u UserRepoPG) UpdateUserCredentials(userCredentials UserCredentials) (*UserCredentials, error) {
-	//TODO implement me
-	panic("implement me")
+	res := u.db.Save(&userCredentials)
+	return &userCredentials, res.Error
 }
 
 func NewUserRepo(db *gorm.DB) *UserRepoPG {
