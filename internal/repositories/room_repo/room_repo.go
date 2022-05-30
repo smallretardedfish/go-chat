@@ -23,27 +23,17 @@ func (r RoomRepoPG) GetRoom(userID, roomID int64) (*Room, error) {
 		return nil, res.Error
 	}
 	room := Room{}
-	res = r.db.Model(Room{}).Where("id = ?", roomUser.RoomID).First(&room)
+	res = r.db.Model(Room{}).Preload("RoomUsers").Where("id = ?", roomUser.RoomID).First(&room)
 	return &room, res.Error
 }
 
-func (r RoomRepoPG) GetRooms(userID int64) ([]Room, error) {
-	var roomUsers []RoomUser
-
-	res := r.db.Model(RoomUser{}).Where("user_id = ?", userID).Find(&roomUsers)
-	if res.Error != nil {
-		return nil, res.Error
-	}
-
+func (r RoomRepoPG) GetRooms(userID int64) ([]Room, error) { // TODO fix gorm belongs-to population of RoomUsers slice
 	var rooms []Room
-	for _, roomUser := range roomUsers {
-		room := Room{}
-		res = r.db.Model(Room{}).Where("id = ?", roomUser.RoomID).Find(&room)
-		if res.Error != nil {
-			return nil, res.Error
-		}
-		rooms = append(rooms, room)
-	}
+	res := r.db.Table("rooms r").
+		Joins(`JOIN room_users ru ON r.id = ru.room_id`).
+		Where("ru.user_id = ?", userID).Preload("Owner").
+		Preload("RoomUsers").Scan(&rooms)
+
 	return rooms, res.Error
 }
 
