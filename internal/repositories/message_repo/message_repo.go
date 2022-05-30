@@ -5,47 +5,66 @@ import (
 )
 
 type MessageRepo interface {
-	CreateMessage(message Message, roomID int64) (*Message, error)
+	CreateMessage(message Message) (*Message, error)
+	GetMessage(messageID int64) (*Message, error)
+	UpdateMessage(roomID int64, message Message) (*Message, error)
+	DeleteMessageForUser(messageID int64) error
+	DeleteMessageForAll(messageID int64) error
 	MessagesByUser(userID int64) ([]Message, error)
-	AllMessagesByUserInRoom(userID int64, roomID int64) ([]Message, error)
-	AllMessagesInRoom(roomId int64) ([]*Message, error)
-	UpdateMessage(userID, roomID int64, message Message) (Message, error)
+	AllMessagesInRoom(roomId int64) ([]Message, error) // TODO: implement pagination
 }
 
 type MessageRepoPG struct {
 	db *gorm.DB
 }
 
-func (m MessageRepoPG) CreateMessage(msg Message) (*Message, error) { // TODO: make it a  gorm transaction
-	res := m.db.Create(&msg).Create(UserMessage{
-		UserID: msg.OwnerID,
-		Status: 1, // unread
-	})
-
+func (m MessageRepoPG) GetMessage(messageID int64) (*Message, error) {
+	msg := Message{}
+	res := m.db.Model(Message{}).Preload("Owner").First(&msg, messageID)
 	return &msg, res.Error
+}
+
+func (m MessageRepoPG) CreateMessage(msg Message) (*Message, error) {
+	err := m.db.Transaction(func(tx *gorm.DB) error {
+		res := m.db.Model(Message{}).Create(&msg)
+		if res.Error != nil {
+			return res.Error
+		}
+		res = m.db.Model(UserMessage{}).Create(UserMessage{
+			MessageID: msg.ID,
+			UserID:    msg.OwnerID,
+			Status:    UserMessageUnread, // unread
+		})
+		return res.Error
+	})
+	return &msg, err
 }
 
 func (m MessageRepoPG) MessagesByUser(userID int64) ([]Message, error) {
 	var messages []Message
-	res := m.db.Model(UserMessage{}).Where("user_id = ?", userID).Find(&messages)
+	res := m.db.Model(UserMessage{}).Where("owner_id = ?", userID).Find(&messages)
 	return messages, res.Error
 }
 
-func (m MessageRepoPG) AllMessagesByUserInRoom(userID int64, roomID int64) ([]Message, error) {
+func (m MessageRepoPG) AllMessagesInRoom(roomID int64) ([]Message, error) { //userID is the initiator
 	var messages []Message
-	res := m.db.Where("user_id = ? AND room_id = ?", userID, roomID).Find(&messages)
+	res := m.db.Where("room_id = ?", roomID).Find(&messages)
 	return messages, res.Error
 }
 
-func (m MessageRepoPG) AllMessagesInRoom(roomId int64) ([]*Message, error) {
-	var messages []*Message
-	res := m.db.Where("room_id = ?", roomId).Find(&messages)
-	return messages, res.Error
+func (m MessageRepoPG) UpdateMessage(message Message) (*Message, error) {
+	res := m.db.Model(Message{}).Where("id = ? AND room_id = ?", message.ID, message.RoomID).Updates(message)
+	return &message, res.Error
 }
 
-func (m MessageRepoPG) UpdateMessage(userID, roomID int64, message Message) (*Message, error) {
-	//TODO implement me
-	panic("implement me")
+func (m MessageRepoPG) DeleteMessageForAll(messageID int64) error {
+	res := m.db.Where("id = ?", messageID).Delete(Message{})
+	return res.Error
+}
+
+func (m MessageRepoPG) DeleteMessageForUser(messageID int64) error {
+	res := m.db.Where("message_id = ?", messageID).Delete(UserMessage{})
+	return res.Error
 }
 
 func NewMessageRepo(db *gorm.DB) *MessageRepoPG {
