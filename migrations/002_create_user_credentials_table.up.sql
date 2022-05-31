@@ -1,0 +1,5 @@
+CREATE TABLE user_credentials(
+     id BIGSERIAL PRIMARY KEY,
+     password TEXT NOT NULL,
+     FOREIGN KEY (id) REFERENCES users(id) ON DELETE CASCADE ON UPDATE CASCADE
+);

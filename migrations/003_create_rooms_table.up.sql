@@ -1,0 +1,11 @@
+CREATE TABLE ROOMS(
+    id BIGSERIAL  PRIMARY KEY,
+    name TEXT NOT NULL,
+    owner_id   BIGINT,
+    created_at TIMESTAMP,
+    updated_at TIMESTAMP,
+    type  BIGINT DEFAULT 2 NOT NULL,
+    FOREIGN KEY (owner_id) REFERENCES users(id)
+    ON UPDATE CASCADE
+    ON DELETE CASCADE
+);
