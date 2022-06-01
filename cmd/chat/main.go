@@ -5,6 +5,7 @@ import (
 	"github.com/smallretardedfish/go-chat/configs"
 	"github.com/smallretardedfish/go-chat/internal/repositories/message_repo"
 	"github.com/smallretardedfish/go-chat/internal/repositories/room_repo"
+	"github.com/smallretardedfish/go-chat/internal/repositories/user_repo"
 	"log"
 )
 
@@ -19,34 +20,63 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	//userRepo := user_repo.NewUserRepo(db)
+	userRepo := user_repo.NewUserRepo(db)
 	roomRepo := room_repo.NewRoomRepo(db)
 	messageRepo := message_repo.NewMessageRepo(db)
-	rooms, err := roomRepo.GetRooms(7)
-	if err != nil {
-		log.Println(err)
-		return
+
+	var names = []string{"Dude", "Joe"}
+	var users []*user_repo.User
+
+	for _, name := range names {
+		user, err := userRepo.CreateUser(user_repo.User{
+			Name: name,
+		})
+		if err != nil {
+			log.Println("error while creating user:", err)
+			return
+		}
+		users = append(users, user)
+		_, err = userRepo.CreateUserCredentials(user_repo.UserCredentials{
+			ID:       user.ID,
+			Password: name + "Password",
+		})
+
+		if err != nil {
+			log.Println("error while creating user credentials:", err)
+		}
 	}
-	for _, room := range rooms {
-		fmt.Println(room.ID, room.Name, room.Owner.Name, room.Owner.ID)
-	}
+	room, _ := roomRepo.CreateRoom(room_repo.Room{
+		Name:    "testRoom",
+		OwnerID: users[0].ID,
+		Type:    room_repo.PublicRoom,
+	})
+
+	updatedRoom := room
+	updatedRoom.RoomUsers = append(updatedRoom.RoomUsers, room_repo.RoomUser{
+		RoomID: room.ID,
+		UserID: users[1].ID,
+		Status: room_repo.RoomUserCreated,
+	})
+	roomRepo.UpdateRoom(room.OwnerID, *updatedRoom)
+
 	//msg, err := messageRepo.GetMessage(10)
 	//if err != nil {
 	//	log.Println(err)
 	//}
 
 	m, err := messageRepo.CreateMessage(message_repo.Message{
-		Text:    "testing owner populating 2",
-		OwnerID: 7,
-		RoomID:  10,
+		Text:    "testing message creation 2",
+		OwnerID: users[1].ID,
+		RoomID:  room.ID,
 	})
 	mes, err := messageRepo.GetMessage(m.ID)
 	if err != nil {
 		log.Println(err)
 		return
 	}
+
 	fmt.Println(mes.Owner.Name)
-	//
+
 	//msg, err = messageRepo.UpdateMessage(message_repo.Message{
 	//	ID:        msg.ID,
 	//	Text:      "edited",

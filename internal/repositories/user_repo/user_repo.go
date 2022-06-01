@@ -17,7 +17,7 @@ type UserRepoPG struct {
 
 func (u UserRepoPG) GetUser(userID int64) (*User, error) {
 	user := User{}
-	res := u.db.First(&user, userID)
+	res := u.db.Model(User{}).First(&user, userID)
 	return &user, res.Error
 }
 
@@ -32,17 +32,17 @@ func (u UserRepoPG) GetUserCredentials(userID int64) (*UserCredentials, error) {
 }
 
 func (u UserRepoPG) CreateUser(user User) (*User, error) {
-	res := u.db.Create(&user)
+	res := u.db.Model(User{}).Create(&user)
 	return &user, res.Error
 }
 
 func (u UserRepoPG) CreateUserCredentials(userCredentials UserCredentials) (*UserCredentials, error) {
-	res := u.db.Create(&userCredentials)
+	res := u.db.Model(UserCredentials{}).Create(&userCredentials)
 	return &userCredentials, res.Error
 }
 
 func (u UserRepoPG) UpdateUserCredentials(userCredentials UserCredentials) (*UserCredentials, error) {
-	res := u.db.Save(&userCredentials)
+	res := u.db.Model(UserCredentials{}).Save(&userCredentials)
 	return &userCredentials, res.Error
 }
 
