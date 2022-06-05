@@ -4,8 +4,8 @@ go 1.18
 
 require (
 	github.com/caarlos0/env v3.5.0+incompatible
-	github.com/jinzhu/gorm v1.9.16
 	github.com/joho/godotenv v1.4.0
+	github.com/lib/pq v1.10.2
 	gorm.io/driver/postgres v1.3.6
 	gorm.io/gorm v1.23.5
 )

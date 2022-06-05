@@ -1,49 +1,70 @@
 package user_repo
 
-import "gorm.io/gorm"
+import (
+	"errors"
+	"fmt"
+	"gorm.io/gorm"
+)
 
 type UserRepo interface {
 	GetUser(userID int64) (*User, error)
-	GetUsers(initiatorUserID int64, userFilter *UserFilter) ([]User, error)
-	GetUserCredentials(userID int64) (*UserCredentials, error)
+	GetUsers(userFilter *UserFilter) ([]User, error)
 	CreateUser(user User) (*User, error)
-	CreateUserCredentials(userCredentials UserCredentials) (*UserCredentials, error)
-	UpdateUserCredentials(userCredentials UserCredentials) (*UserCredentials, error)
+	UpdateUser(user User) (*User, error)
+	DeleteUser(userID int64) (bool, error)
 }
 
 type UserRepoPG struct {
 	db *gorm.DB
 }
 
-func (u UserRepoPG) GetUser(userID int64) (*User, error) {
+func (u *UserRepoPG) GetUser(userID int64) (*User, error) {
 	user := User{}
-	res := u.db.Model(User{}).First(&user, userID)
-	return &user, res.Error
+	err := u.db.Model(User{}).First(&user, userID).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &user, nil
 }
 
-func (u UserRepoPG) GetUsers(initiatorUserID int64, userFilter *UserFilter) ([]User, error) {
-	panic("implement me")
+func (u *UserRepoPG) GetUsers(userFilter *UserFilter) ([]User, error) {
+	var users []User
+
+	res := u.db
+	if userFilter != nil {
+		if userFilter.RoomID != nil {
+			res = res.Table("users AS u").
+				Joins("JOIN room_users AS ru  ON u.id=ru.user_id").
+				Where("room_id = ?", *userFilter.RoomID)
+		}
+		if userFilter.Search != nil {
+			res = res.Where("name LIKE ?", fmt.Sprintf("%%%s%%", *userFilter.Search))
+		}
+	}
+	err := res.Find(&users).Error
+	if err != nil {
+		return nil, err
+	}
+	return users, nil
 }
 
-func (u UserRepoPG) GetUserCredentials(userID int64) (*UserCredentials, error) {
-	userCredentials := UserCredentials{}
-	res := u.db.Model(UserCredentials{}).First(&userCredentials, userID)
-	return &userCredentials, res.Error
+func (u *UserRepoPG) CreateUser(user User) (*User, error) {
+	err := u.db.Model(User{}).Create(&user).Error
+	if err != nil {
+		return nil, err
+	}
+	return &user, nil
 }
 
-func (u UserRepoPG) CreateUser(user User) (*User, error) {
-	res := u.db.Model(User{}).Create(&user)
-	return &user, res.Error
-}
-
-func (u UserRepoPG) CreateUserCredentials(userCredentials UserCredentials) (*UserCredentials, error) {
-	res := u.db.Model(UserCredentials{}).Create(&userCredentials)
-	return &userCredentials, res.Error
-}
-
-func (u UserRepoPG) UpdateUserCredentials(userCredentials UserCredentials) (*UserCredentials, error) {
-	res := u.db.Model(UserCredentials{}).Save(&userCredentials)
-	return &userCredentials, res.Error
+func (u *UserRepoPG) DeleteUser(userID int64) (bool, error) {
+	err := u.db.Delete(User{}, userID).Error
+	if err != nil {
+		return false, err
+	}
+	return true, nil
 }
 
 func NewUserRepo(db *gorm.DB) *UserRepoPG {

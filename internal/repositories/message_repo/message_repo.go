@@ -1,70 +1,60 @@
 package message_repo
 
 import (
+	"errors"
 	"gorm.io/gorm"
 )
 
+//TODO fix Preloading of fields
+
 type MessageRepo interface {
 	CreateMessage(message Message) (*Message, error)
-	GetMessage(messageID int64) (*Message, error)
+	GetMessages(messageID int64) ([]Message, error)
 	UpdateMessage(roomID int64, message Message) (*Message, error)
-	DeleteMessageForUser(messageID int64) error
-	DeleteMessageForAll(messageID int64) error
-	MessagesByUser(userID int64) ([]Message, error)
-	AllMessagesInRoom(roomId int64) ([]Message, error) // TODO: implement pagination
+	DeleteMessage(messageID int64) (bool, error)
 }
 
 type MessageRepoPG struct {
 	db *gorm.DB
 }
 
-func (m MessageRepoPG) GetMessage(messageID int64) (*Message, error) {
-	msg := Message{}
-	res := m.db.Model(Message{}).Preload("Owner").First(&msg, messageID)
-	return &msg, res.Error
+func (m *MessageRepoPG) CreateMessage(msg Message) (*Message, error) { // TODO develop logic of creating message (store  people who deleted this message)
+	err := m.db.Model(Message{}).Create(&msg).Error
+	if err != nil {
+		return nil, err
+	}
+	return &msg, nil
 }
 
-func (m MessageRepoPG) CreateMessage(msg Message) (*Message, error) {
-	err := m.db.Transaction(func(tx *gorm.DB) error {
-		res := m.db.Model(Message{}).Create(&msg)
-		if res.Error != nil {
-			return res.Error
+func (m *MessageRepoPG) GetMessages(messageFilter *MessageFilter, userID, roomID int64) ([]Message, error) {
+	var messages []Message
+	err := m.db.Where("room_id = ? AND ? != ALL(deleted_users) ", roomID, userID).Find(&messages).Error //TODO implement logic of showing non-deleted messages
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
 		}
-		res = m.db.Model(UserMessage{}).Create(UserMessage{
-			MessageID: msg.ID,
-			UserID:    msg.OwnerID,
-			Status:    UserMessageUnread, // unread
-		})
-		return res.Error
-	})
-	return &msg, err
+		return nil, err
+	}
+	return messages, err
 }
 
-func (m MessageRepoPG) MessagesByUser(userID int64) ([]Message, error) {
-	var messages []Message
-	res := m.db.Model(UserMessage{}).Where("owner_id = ?", userID).Find(&messages)
-	return messages, res.Error
+func (m *MessageRepoPG) UpdateMessage(message Message) (*Message, error) {
+	err := m.db.Model(Message{}).Where("id = ?", message.ID).Save(message).Error
+	if err != nil {
+		return nil, err
+	}
+	return &message, nil
 }
 
-func (m MessageRepoPG) AllMessagesInRoom(roomID int64) ([]Message, error) { //userID is the initiator
-	var messages []Message
-	res := m.db.Where("room_id = ?", roomID).Find(&messages)
-	return messages, res.Error
-}
-
-func (m MessageRepoPG) UpdateMessage(message Message) (*Message, error) {
-	res := m.db.Model(Message{}).Where("id = ? AND room_id = ?", message.ID, message.RoomID).Updates(message)
-	return &message, res.Error
-}
-
-func (m MessageRepoPG) DeleteMessageForAll(messageID int64) error {
-	res := m.db.Where("id = ?", messageID).Delete(Message{})
-	return res.Error
-}
-
-func (m MessageRepoPG) DeleteMessageForUser(messageID int64) error {
-	res := m.db.Where("message_id = ?", messageID).Delete(UserMessage{})
-	return res.Error
+func (m *MessageRepoPG) DeleteMessage(messageID int64) error {
+	err := m.db.Delete(Message{}, messageID).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil
+		}
+		return err
+	}
+	return nil
 }
 
 func NewMessageRepo(db *gorm.DB) *MessageRepoPG {
