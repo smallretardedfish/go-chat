@@ -1,6 +1,8 @@
 CREATE TABLE users(
     id         BIGSERIAL PRIMARY KEY,
-    name       TEXT UNIQUE,
-    created_at TIMESTAMP WITH TIME ZONE,
-    updated_at TIMESTAMP WITH TIME ZONE
+    name       VARCHAR(255)  NOT NULL,
+    email       VARCHAR(255) UNIQUE NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT now(),
+    updated_at TIMESTAMP  NOT NULL DEFAULT now()
 );
+
