@@ -6,7 +6,7 @@ import (
 
 // TODO make mapper from repo layer to service
 
-func repoUserToServiceUser(user user_repo.User) User {
+func repoUserToDomainUser(user user_repo.User) User {
 	return User{
 		ID:        user.ID,
 		Name:      user.Name,
@@ -16,7 +16,7 @@ func repoUserToServiceUser(user user_repo.User) User {
 	}
 }
 
-func serviceUserToRepoUser(user User) user_repo.User {
+func domainUserToRepoUser(user User) user_repo.User {
 	return user_repo.User{
 		ID:        user.ID,
 		Name:      user.Name,

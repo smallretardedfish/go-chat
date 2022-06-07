@@ -13,21 +13,21 @@ type UserServiceImpl struct {
 }
 
 func (u *UserServiceImpl) GetUser(userID int64) (*User, error) {
-	usr, err := u.userRepo.GetUser(userID)
+	usr, err := u.userRepo.GetUserByID(userID)
 	if err != nil {
 		return nil, err
 	}
-	user := repoUserToServiceUser(*usr)
+	user := repoUserToDomainUser(*usr)
 	return &user, nil
 }
 
 func (u *UserServiceImpl) UpdateUser(user User) (*User, error) {
-	userToUpdate := serviceUserToRepoUser(user)
+	userToUpdate := domainUserToRepoUser(user)
 	usr, err := u.userRepo.UpdateUser(userToUpdate)
 	if err != nil {
 		return nil, err
 	}
-	user = repoUserToServiceUser(*usr)
+	user = repoUserToDomainUser(*usr)
 	return &user, nil
 }
 

@@ -6,20 +6,28 @@ import (
 
 // TODO make mapper from repo layer to service
 
-func repoMessageToServiceMessage(message message_repo.Message) Message {
+func repoMessageToDomainMessage(message message_repo.Message) Message {
 	return Message{
-		ID:   message.ID,
-		Text: message.Text,
+		ID:      message.ID,
+		Text:    message.Text,
+		OwnerID: message.OwnerID,
 		Owner: User{
+			ID:   message.OwnerID,
 			Name: message.Owner.Name,
 		},
+		RoomID:    message.RoomID,
+		CreatedAt: message.CreatedAt,
+		UpdatedAt: message.UpdatedAt,
 	}
 }
 
-func serviceMessageToRepoMessage(message Message) message_repo.Message { // TODO implement proper mapping
+func domainMessageToRepoMessage(message Message) message_repo.Message { // TODO implement proper mapping
 	return message_repo.Message{
-		ID:      message.ID,
-		Text:    message.Text,
-		OwnerID: message.Owner.ID,
+		ID:        message.ID,
+		Text:      message.Text,
+		OwnerID:   message.OwnerID,
+		RoomID:    message.RoomID,
+		CreatedAt: message.CreatedAt,
+		UpdatedAt: message.UpdatedAt,
 	}
 }
