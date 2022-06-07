@@ -5,13 +5,6 @@ import (
 	"time"
 )
 
-type RoomType = int8
-
-const (
-	PrivateRoom RoomType = iota + 1
-	PublicRoom
-)
-
 type Room struct {
 	ID        int64            `gorm:"column:id;primaryKey"`
 	Name      string           `gorm:"column:name"`

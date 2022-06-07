@@ -7,7 +7,8 @@ import (
 )
 
 type UserRepo interface {
-	GetUser(userID int64) (*User, error)
+	GetUserByID(userID int64) (*User, error)
+	GetUserByEmail(email string) (*User, error)
 	GetUsers(userFilter *UserFilter) ([]User, error)
 	CreateUser(user User) (*User, error)
 	UpdateUser(user User) (*User, error)
@@ -18,9 +19,23 @@ type UserRepoPG struct {
 	db *gorm.DB
 }
 
-func (u *UserRepoPG) GetUser(userID int64) (*User, error) {
+var _ UserRepo = (*UserRepoPG)(nil)
+
+func (u *UserRepoPG) GetUserByID(userID int64) (*User, error) {
 	user := User{}
 	err := u.db.Model(User{}).First(&user, userID).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &user, nil
+}
+
+func (u *UserRepoPG) GetUserByEmail(email string) (*User, error) {
+	user := User{}
+	err := u.db.Model(User{}).First(&user, email).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
@@ -53,6 +68,14 @@ func (u *UserRepoPG) GetUsers(userFilter *UserFilter) ([]User, error) {
 
 func (u *UserRepoPG) CreateUser(user User) (*User, error) {
 	err := u.db.Model(User{}).Create(&user).Error
+	if err != nil {
+		return nil, err
+	}
+	return &user, nil
+}
+
+func (u *UserRepoPG) UpdateUser(user User) (*User, error) {
+	err := u.db.Model(User{}).Where("id = ?", user.ID).Save(&user).Error
 	if err != nil {
 		return nil, err
 	}

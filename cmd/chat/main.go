@@ -3,7 +3,13 @@ package main
 import (
 	"fmt"
 	"github.com/smallretardedfish/go-chat/configs"
+	"github.com/smallretardedfish/go-chat/internal/domains/chat"
+	"github.com/smallretardedfish/go-chat/internal/domains/user"
 	"github.com/smallretardedfish/go-chat/internal/repositories/message_repo"
+	"github.com/smallretardedfish/go-chat/internal/repositories/room_repo"
+	"github.com/smallretardedfish/go-chat/internal/repositories/user_cred_repo"
+	"github.com/smallretardedfish/go-chat/internal/repositories/user_repo"
+
 	//"github.com/smallretardedfish/go-chat/internal/repositories/user_repo"
 	"log"
 )
@@ -19,9 +25,16 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	//userRepo := user_repo.NewUserRepo(db)
-	//roomRepo := room_repo.NewRoomRepo(db)
+	userRepo := user_repo.NewUserRepo(db)
+	roomRepo := room_repo.NewRoomRepo(db)
 	messageRepo := message_repo.NewMessageRepo(db)
+	credsRepo := user_cred_repo.NewUserCredentialsRepo(db)
+
+	chat.NewMessageServiceImpl(messageRepo)
+	chat.NewRoomServiceImpl(roomRepo)
+	user.NewAuthServiceImpl(credsRepo, userRepo)
+	user.NewUserServiceImpl(userRepo)
+
 	msg, err := messageRepo.CreateMessage(message_repo.Message{
 		Text:         "HELLO ",
 		OwnerID:      1,

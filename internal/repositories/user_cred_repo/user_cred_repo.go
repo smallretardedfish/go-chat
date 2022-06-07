@@ -8,6 +8,7 @@ import (
 type UserCredentialsRepo interface {
 	CreateUserCredentials(credentials UserCredentials) (*UserCredentials, error)
 	GetUserCredentials(email string) (*UserCredentials, error)
+	UpdateUserCredentials(credentials UserCredentials) (*UserCredentials, error)
 }
 
 type UserCredentialsPG struct {
@@ -42,6 +43,6 @@ func (u *UserCredentialsPG) UpdateUserCredentials(userCredentials UserCredential
 	return &userCredentials, nil
 }
 
-func NewUserCredentialsPG(db *gorm.DB) *UserCredentialsPG {
+func NewUserCredentialsRepo(db *gorm.DB) *UserCredentialsPG {
 	return &UserCredentialsPG{db: db}
 }

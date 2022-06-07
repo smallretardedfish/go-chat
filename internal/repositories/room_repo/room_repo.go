@@ -85,7 +85,7 @@ func (r *RoomRepoPG) UpdateRoom(userID int64, room Room) (*Room, error) {
 }
 
 func (r *RoomRepoPG) DeleteRoom(userID, roomID int64) (bool, error) {
-	err := r.db.Exec("DELETE FROM room_users WHERE user_id = ? AND room_id = ?", userID, roomID).Error
+	err := r.db.Exec("DELETE FROM room_users WHERE owner_id = ? AND room_id = ?", userID, roomID).Error
 	if err != nil {
 		return false, err
 	}

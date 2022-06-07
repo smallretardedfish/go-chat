@@ -2,6 +2,7 @@ package message_repo
 
 import (
 	"errors"
+	"fmt"
 	"gorm.io/gorm"
 )
 
@@ -9,10 +10,14 @@ import (
 
 type MessageRepo interface {
 	CreateMessage(message Message) (*Message, error)
-	GetMessages(messageID int64) ([]Message, error)
-	UpdateMessage(roomID int64, message Message) (*Message, error)
+	GetMessage(messageID int64) (*Message, error)
+	GetMessages(messageFilter *MessageFilter, userID, roomID int64) ([]Message, error)
+	UpdateMessage(message Message) (*Message, error)
 	DeleteMessage(messageID int64) (bool, error)
+	DeleteMessageForUser(messageID, userID int64) (bool, error)
 }
+
+var _ MessageRepo = (*MessageRepoPG)(nil)
 
 type MessageRepoPG struct {
 	db *gorm.DB
@@ -26,9 +31,30 @@ func (m *MessageRepoPG) CreateMessage(msg Message) (*Message, error) { // TODO d
 	return &msg, nil
 }
 
+func (m *MessageRepoPG) GetMessage(messageID int64) (*Message, error) {
+	message := Message{}
+	err := m.db.Model(Message{}).Where("id = ?", messageID).First(&message).Error
+	if err != nil {
+		return nil, err
+	}
+	return &message, nil
+}
+
 func (m *MessageRepoPG) GetMessages(messageFilter *MessageFilter, userID, roomID int64) ([]Message, error) {
 	var messages []Message
-	err := m.db.Where("room_id = ? AND ? != ALL(deleted_users) ", roomID, userID).Find(&messages).Error //TODO implement logic of showing non-deleted messages
+	res := m.db.Where("room_id = ? AND ? != ALL(deleted_users) ", roomID, userID).Find(&messages) //TODO implement logic of showing non-deleted messages
+	if messageFilter != nil {
+		if messageFilter.Search != nil {
+			res = res.Where("text LIKE ?", fmt.Sprintf("%%%s%%", *messageFilter.Search))
+		}
+		if messageFilter.Offset != nil {
+			res = res.Offset(int(*messageFilter.Offset))
+		}
+		if messageFilter.Limit != nil {
+			res = res.Limit(int(*messageFilter.Limit))
+		}
+	}
+	err := res.Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
@@ -46,15 +72,20 @@ func (m *MessageRepoPG) UpdateMessage(message Message) (*Message, error) {
 	return &message, nil
 }
 
-func (m *MessageRepoPG) DeleteMessage(messageID int64) error {
+func (m *MessageRepoPG) DeleteMessage(messageID int64) (bool, error) {
 	err := m.db.Delete(Message{}, messageID).Error
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil
-		}
-		return err
+		return false, err
 	}
-	return nil
+	return true, nil
+}
+
+func (m *MessageRepoPG) DeleteMessageForUser(messageID, userID int64) (bool, error) {
+	err := m.db.Exec("UPDATE messages SET deleted_users = array_append(deleted_users,?) WHERE message_id = ?", userID, messageID).Error
+	if err != nil {
+		return false, err
+	}
+	return true, nil
 }
 
 func NewMessageRepo(db *gorm.DB) *MessageRepoPG {
