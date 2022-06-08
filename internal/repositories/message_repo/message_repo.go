@@ -64,7 +64,7 @@ func (m *MessageRepoPG) GetMessages(messageFilter *MessageFilter, userID, roomID
 	return messages, err
 }
 
-func (m *MessageRepoPG) UpdateMessage(message Message) (*Message, error) {
+func (m *MessageRepoPG) UpdateMessage(message Message) (*Message, error) { // TODO fix null deleted_users array after update in case it was empty before
 	err := m.db.Model(Message{}).Where("id = ?", message.ID).Save(message).Error
 	if err != nil {
 		return nil, err
@@ -81,7 +81,7 @@ func (m *MessageRepoPG) DeleteMessage(messageID int64) (bool, error) {
 }
 
 func (m *MessageRepoPG) DeleteMessageForUser(messageID, userID int64) (bool, error) {
-	err := m.db.Exec("UPDATE messages SET deleted_users = array_append(deleted_users,?) WHERE message_id = ?", userID, messageID).Error
+	err := m.db.Exec("UPDATE messages SET deleted_users = array_append(deleted_users,?) WHERE id = ?", userID, messageID).Error
 	if err != nil {
 		return false, err
 	}

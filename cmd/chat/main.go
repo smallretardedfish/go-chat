@@ -36,27 +36,42 @@ func main() {
 	//userSvc := user.NewUserServiceImpl(userRepo)
 
 	// testing here
-	newUser, err := authSvc.SignUp(user.User{
-		Name:  "Victor32284",
-		Email: "victor32284@mail.ua",
+	newUser1, err := authSvc.SignUp(user.User{
+		Name:  "Oliver",
+		Email: "oli1@mail.ua",
 	}, user.UserCredentials{
-		Email:    "victor32284@mail.ua",
+		Email:    "oli1@mail.ua",
+		Password: "victorPASS",
+	})
+	newUser2, err := authSvc.SignUp(user.User{
+		Name:  "Ray",
+		Email: "ray1@mail.ua",
+	}, user.UserCredentials{
+		Email:    "ray1@mail.ua",
 		Password: "victorPASS",
 	})
 
 	newRoom, err := roomSvc.CreateRoom(chat.Room{
-		Name:    "NEW ROOM",
-		OwnerID: newUser.ID,
-	}, nil)
+		Name:    "CONVERSATION",
+		OwnerID: newUser1.ID,
+	}, []int64{newUser2.ID})
 
-	room, err := roomSvc.GetRoom(newUser.ID, newRoom.ID)
+	room, err := roomSvc.GetRoom(newUser2.ID, newRoom.ID)
 	if err != nil {
 		return
 	}
-	fmt.Println("Owner Name is", room.OwnerID, room.Owner.Name, room.Users)
 	_, err = messageSvc.CreateMessage(chat.Message{
-		Text:    "HELLO",
-		OwnerID: newUser.ID,
+		Text:    "HELLO " + newUser2.Name,
+		OwnerID: newUser1.ID,
+		RoomID:  room.ID,
+	})
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	_, err = messageSvc.CreateMessage(chat.Message{
+		Text:    "HELLO" + newUser1.Name,
+		OwnerID: newUser2.ID,
 		RoomID:  room.ID,
 	})
 	if err != nil {
@@ -64,13 +79,29 @@ func main() {
 		return
 	}
 
-	messages, err := messageSvc.GetMessages(nil, nil, newUser.ID, room.ID)
+	messages, err := messageSvc.GetMessages(nil, nil, newUser1.ID, room.ID)
 	if err != nil {
 		log.Println(err)
 		return
 	}
-	fmt.Println(messages)
-	fmt.Println("message is written by: ", messages[0].Owner.Name, messages[0].Owner.ID)
+	for i := range messages {
+		fmt.Println(messages[i].Owner.Name, messages[i].Owner.ID, "says: ", messages[i].Text)
+	}
+	ok, err := messageSvc.DeleteMessage(newUser1.ID, messages[1].ID)
+	if err != nil {
+		log.Println(ok, err)
+		return
+	}
+
+	messagesAfterChanges, err := messageSvc.GetMessages(nil, nil, newUser1.ID, room.ID)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	for i := range messagesAfterChanges {
+		fmt.Println(messagesAfterChanges[i].Owner.Name, messagesAfterChanges[i].Owner.ID, "says: ", messagesAfterChanges[i].Text)
+	}
 
 	return
 }

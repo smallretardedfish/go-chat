@@ -46,7 +46,7 @@ func (m *MessageServiceImpl) CreateMessage(message Message) (*Message, error) {
 	return &res, nil
 }
 
-func (m *MessageServiceImpl) UpdateMessage(message Message) (*Message, error) {
+func (m *MessageServiceImpl) UpdateMessage(message Message) (*Message, error) { //TODO fix deleted_users loss after mapping
 	repoMsg := domainMessageToRepoMessage(message)
 	msg, err := m.messageRepo.UpdateMessage(repoMsg)
 	if err != nil {

@@ -15,19 +15,21 @@ func repoMessageToDomainMessage(message message_repo.Message) Message {
 			ID:   message.OwnerID,
 			Name: message.Owner.Name,
 		},
-		RoomID:    message.RoomID,
-		CreatedAt: message.CreatedAt,
-		UpdatedAt: message.UpdatedAt,
+		RoomID:       message.RoomID,
+		DeletedUsers: message.DeletedUsers,
+		CreatedAt:    message.CreatedAt,
+		UpdatedAt:    message.UpdatedAt,
 	}
 }
 
 func domainMessageToRepoMessage(message Message) message_repo.Message { // TODO implement proper mapping
 	return message_repo.Message{
-		ID:        message.ID,
-		Text:      message.Text,
-		OwnerID:   message.OwnerID,
-		RoomID:    message.RoomID,
-		CreatedAt: message.CreatedAt,
-		UpdatedAt: message.UpdatedAt,
+		ID:           message.ID,
+		Text:         message.Text,
+		OwnerID:      message.OwnerID,
+		RoomID:       message.RoomID,
+		DeletedUsers: message.DeletedUsers,
+		CreatedAt:    message.CreatedAt,
+		UpdatedAt:    message.UpdatedAt,
 	}
 }

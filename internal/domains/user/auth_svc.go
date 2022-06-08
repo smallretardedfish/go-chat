@@ -1,14 +1,11 @@
 package user
 
 import (
-	"errors"
 	"fmt"
 	"github.com/smallretardedfish/go-chat/internal/repositories/user_cred_repo"
 	"github.com/smallretardedfish/go-chat/internal/repositories/user_repo"
 	"golang.org/x/crypto/bcrypt"
 )
-
-var EmailDoesNotExist = errors.New("email not present")
 
 type AuthService interface {
 	SingIn(email, password string) (*User, error) // bcrypt
