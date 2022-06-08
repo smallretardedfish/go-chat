@@ -3,7 +3,7 @@ CREATE TABLE messages(
   text TEXT,
   owner_id BIGINT NULL,
   room_id BIGINT NOT NULL,
-  deleted_users INTEGER[] DEFAULT  ARRAY[],
+  deleted_users INTEGER[] DEFAULT  '{}',
   created_at TIMESTAMP NOT NULL DEFAULT now(),
   updated_at TIMESTAMP NOT NULL DEFAULT now(),
   FOREIGN KEY(owner_id) REFERENCES users(id)  ON DELETE SET NULL ON UPDATE CASCADE ,
