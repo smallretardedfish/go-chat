@@ -33,7 +33,7 @@ func (m *MessageRepoPG) CreateMessage(msg Message) (*Message, error) { // TODO d
 
 func (m *MessageRepoPG) GetMessage(messageID int64) (*Message, error) {
 	message := Message{}
-	err := m.db.Model(Message{}).Where("id = ?", messageID).First(&message).Error
+	err := m.db.Model(Message{}).Preload("Owner").Where("id = ?", messageID).First(&message).Error
 	if err != nil {
 		return nil, err
 	}
@@ -42,7 +42,7 @@ func (m *MessageRepoPG) GetMessage(messageID int64) (*Message, error) {
 
 func (m *MessageRepoPG) GetMessages(messageFilter *MessageFilter, userID, roomID int64) ([]Message, error) {
 	var messages []Message
-	res := m.db.Where("room_id = ? AND ? != ALL(deleted_users) ", roomID, userID).Find(&messages) //TODO implement logic of showing non-deleted messages
+	res := m.db.Preload("Owner").Where("room_id = ? AND ? != ALL(deleted_users) ", roomID, userID).Find(&messages) //TODO implement logic of showing non-deleted messages
 	if messageFilter != nil {
 		if messageFilter.Search != nil {
 			res = res.Where("text LIKE ?", fmt.Sprintf("%%%s%%", *messageFilter.Search))

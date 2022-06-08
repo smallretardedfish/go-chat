@@ -3,7 +3,6 @@ package room_repo
 import (
 	"errors"
 	"gorm.io/gorm"
-	"log"
 	"time"
 )
 
@@ -21,9 +20,9 @@ type RoomRepoPG struct {
 	db *gorm.DB
 }
 
-func (r *RoomRepoPG) GetRoom(userID, roomID int64) (*Room, error) {
+func (r *RoomRepoPG) GetRoom(userID, roomID int64) (*Room, error) { // TODO fix Owner and Users Preload
 	room := Room{}
-	err := r.db.Raw("SELECT * FROM rooms AS r JOIN room_users AS ru ON r.id = ru.room_id WHERE ru.user_id = ? AND ru.room_id = ?", userID, roomID).
+	err := r.db.Preload("Owner").Preload("Users").Raw("SELECT * FROM rooms AS r JOIN room_users AS ru ON r.id = ru.room_id WHERE ru.user_id = ? AND ru.room_id = ?", userID, roomID).
 		First(&room).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -36,7 +35,7 @@ func (r *RoomRepoPG) GetRoom(userID, roomID int64) (*Room, error) {
 
 func (r *RoomRepoPG) GetRooms(userID int64) ([]Room, error) { // TODO fix gorm belongs-to population of Users slice
 	var rooms []Room
-	err := r.db.Raw("SELECT * FROM rooms AS r JOIN room_users AS ru ON r.id = ru.room_id WHERE ru.user_id = ?", userID).Find(&rooms).Error
+	err := r.db.Preload("Owner").Preload("Users").Raw("SELECT * FROM rooms AS r JOIN room_users AS ru ON r.id = ru.room_id WHERE ru.user_id = ?", userID).Find(&rooms).Error
 	if err != nil {
 		return nil, err
 	}
@@ -60,7 +59,7 @@ func (r *RoomRepoPG) DeleteRoomUser(roomID, userID int64) (bool, error) {
 }
 
 func (r *RoomRepoPG) CreateRoom(room Room) (*Room, error) {
-	err := r.db.Raw(`INSERT INTO rooms(owner_id,name) VALUES(?,?) RETURNING *`, room.OwnerID, room.Name).Scan(&room).Error
+	err := r.db.Raw("INSERT INTO rooms(owner_id,name) VALUES(?,?) RETURNING *", room.OwnerID, room.Name).Scan(&room).Error
 	if err != nil {
 		return nil, err
 	}
@@ -75,7 +74,7 @@ func (r *RoomRepoPG) CreateRoom(room Room) (*Room, error) {
 }
 
 func (r *RoomRepoPG) UpdateRoom(userID int64, room Room) (*Room, error) {
-	log.Println("UPDATING ROOM WITH ID", room.ID)
+	//log.Println("UPDATING ROOM WITH ID", room.ID)
 	err := r.db.Raw("UPDATE rooms SET  name = ?, updated_at = ? WHERE id IN (SELECT room_id FROM "+
 		"rooms r  JOIN  room_users ru ON r.id = ru.room_id WHERE room_id= ? AND user_id = ? )", room.Name, time.Now(), room.ID, userID).Scan(&room).Error
 	if err != nil {
