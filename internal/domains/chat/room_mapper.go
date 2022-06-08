@@ -8,16 +8,22 @@ import (
 
 func repoRoomToDomainRoom(room room_repo.Room) Room {
 	var users []User
+
 	for _, user := range room.Users {
 		users = append(users, User{
 			ID:   user.ID,
 			Name: user.Name,
 		})
 	}
+
 	return Room{
-		ID:        room.ID,
-		Name:      room.Name,
-		OwnerID:   room.OwnerID,
+		ID:      room.ID,
+		Name:    room.Name,
+		OwnerID: room.OwnerID,
+		Owner: User{
+			ID:   room.Owner.ID,
+			Name: room.Owner.Name,
+		},
 		Type:      room.Type,
 		Users:     users,
 		CreatedAt: room.CreatedAt,

@@ -2,6 +2,7 @@ package chat
 
 import (
 	"github.com/smallretardedfish/go-chat/internal/repositories/room_repo"
+	"log"
 )
 
 type RoomService interface {
@@ -24,6 +25,9 @@ func (r *RoomServiceImpl) GetRoom(userID, roomID int64) (*Room, error) {
 	if err != nil {
 		return nil, err
 	}
+	log.Println("REPO ROOM OWNER NAME IS:", room.Owner.Name)
+	log.Println("REPO ROOM USERS ARE:", room.Users)
+
 	res := repoRoomToDomainRoom(*room)
 	return &res, nil
 }

@@ -15,12 +15,12 @@ type MessageServiceImpl struct {
 	messageRepo message_repo.MessageRepo
 }
 
-func (m *MessageServiceImpl) GetMessages(limit, offset, userID, roomID int64) ([]Message, error) {
+func (m *MessageServiceImpl) GetMessages(limit, offset *int64, userID, roomID int64) ([]Message, error) {
 
 	messages, err := m.messageRepo.GetMessages(&message_repo.MessageFilter{
 		Search: nil,
-		Limit:  &limit,
-		Offset: &offset,
+		Limit:  limit,
+		Offset: offset,
 	}, userID, roomID)
 
 	if err != nil {

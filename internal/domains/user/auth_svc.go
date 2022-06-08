@@ -43,14 +43,14 @@ func (a *AuthServiceImpl) SingIn(email, password string) (*User, error) {
 }
 
 func (a *AuthServiceImpl) SignUp(user User, credentials UserCredentials) (*User, error) {
-	repoCreds := domainCredentialsToRepoCredentials(credentials)
-	_, err := a.userCredRepo.CreateUserCredentials(repoCreds)
-	if err != nil {
-		return nil, err
-	}
 	domainUser := domainUserToRepoUser(user)
 	createdUser, err := a.userRepo.CreateUser(domainUser)
 	if err != nil {
+		return nil, err
+	}
+	repoCreds := domainCredentialsToRepoCredentials(credentials)
+
+	if _, err := a.userCredRepo.CreateUserCredentials(repoCreds); err != nil {
 		return nil, err
 	}
 	usr := repoUserToDomainUser(*createdUser)
