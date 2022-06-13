@@ -2,20 +2,20 @@ package chat
 
 import (
 	"github.com/smallretardedfish/go-chat/internal/repositories/room_repo"
+	"github.com/smallretardedfish/go-chat/internal/repositories/user_repo"
+	"github.com/smallretardedfish/go-chat/tools/slice"
 )
 
-//TODO investigate how to map user list of room in one direction and vice versa
+// TODO refactor with slice.Map
 
-func repoRoomToDomainRoom(room room_repo.Room) Room {
-	var users []User
-
-	for _, user := range room.Users {
-		users = append(users, User{
-			ID:   user.ID,
-			Name: user.Name,
-		})
+func repoUserToUser(repoUser user_repo.User) User {
+	return User{
+		ID:   repoUser.ID,
+		Name: repoUser.Name,
 	}
+}
 
+func repoRoomToRoom(room room_repo.Room) Room {
 	return Room{
 		ID:      room.ID,
 		Name:    room.Name,
@@ -25,13 +25,13 @@ func repoRoomToDomainRoom(room room_repo.Room) Room {
 			Name: room.Owner.Name,
 		},
 		Type:      room.Type,
-		Users:     users,
+		Users:     slice.Map(room.Users, repoUserToUser),
 		CreatedAt: room.CreatedAt,
 		UpdatedAt: room.UpdatedAt,
 	}
 }
 
-func domainRoomToRepoRoom(room Room) room_repo.Room {
+func RoomToRepoRoom(room Room) room_repo.Room {
 	return room_repo.Room{
 		ID:        room.ID,
 		Name:      room.Name,

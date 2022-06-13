@@ -4,9 +4,7 @@ import (
 	"github.com/smallretardedfish/go-chat/internal/repositories/user_repo"
 )
 
-// TODO make mapper from repo layer to service
-
-func repoUserToDomainUser(user user_repo.User) User {
+func repoUserToUser(user user_repo.User) User {
 	return User{
 		ID:        user.ID,
 		Name:      user.Name,
@@ -16,7 +14,7 @@ func repoUserToDomainUser(user user_repo.User) User {
 	}
 }
 
-func domainUserToRepoUser(user User) user_repo.User {
+func userToRepoUser(user User) user_repo.User {
 	return user_repo.User{
 		ID:        user.ID,
 		Name:      user.Name,

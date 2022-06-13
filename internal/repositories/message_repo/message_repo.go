@@ -1,12 +1,9 @@
 package message_repo
 
 import (
-	"errors"
 	"fmt"
 	"gorm.io/gorm"
 )
-
-//TODO fix Preloading of fields
 
 type MessageRepo interface {
 	CreateMessage(message Message) (*Message, error)
@@ -17,13 +14,11 @@ type MessageRepo interface {
 	DeleteMessageForUser(messageID, userID int64) (bool, error)
 }
 
-var _ MessageRepo = (*MessageRepoPG)(nil)
-
 type MessageRepoPG struct {
 	db *gorm.DB
 }
 
-func (m *MessageRepoPG) CreateMessage(msg Message) (*Message, error) { // TODO develop logic of creating message (store  people who deleted this message)
+func (m *MessageRepoPG) CreateMessage(msg Message) (*Message, error) {
 	err := m.db.Model(Message{}).Create(&msg).Error
 	if err != nil {
 		return nil, err
@@ -40,9 +35,10 @@ func (m *MessageRepoPG) GetMessage(messageID int64) (*Message, error) {
 	return &message, nil
 }
 
+//TODO check where clause
 func (m *MessageRepoPG) GetMessages(messageFilter *MessageFilter, userID, roomID int64) ([]Message, error) {
 	var messages []Message
-	res := m.db.Preload("Owner").Where("room_id = ? AND ? != ALL(deleted_users) ", roomID, userID).Find(&messages) //TODO implement logic of showing non-deleted messages
+	res := m.db.Preload("Owner").Where("room_id = ? AND ? != ALL(deleted_users) ", roomID, userID)
 	if messageFilter != nil {
 		if messageFilter.Search != nil {
 			res = res.Where("text LIKE ?", fmt.Sprintf("%%%s%%", *messageFilter.Search))
@@ -54,18 +50,15 @@ func (m *MessageRepoPG) GetMessages(messageFilter *MessageFilter, userID, roomID
 			res = res.Limit(int(*messageFilter.Limit))
 		}
 	}
-	err := res.Error
+	err := res.Find(&messages).Error
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, nil
-		}
 		return nil, err
 	}
-	return messages, err
+	return messages, nil
 }
 
-func (m *MessageRepoPG) UpdateMessage(message Message) (*Message, error) { // TODO fix null deleted_users array after update in case it was empty before
-	err := m.db.Model(Message{}).Where("id = ?", message.ID).Save(message).Error
+func (m *MessageRepoPG) UpdateMessage(message Message) (*Message, error) {
+	err := m.db.Model(Message{}).Omit("deleted_users").Where("id = ?", message.ID).Save(message).Error
 	if err != nil {
 		return nil, err
 	}
@@ -73,17 +66,25 @@ func (m *MessageRepoPG) UpdateMessage(message Message) (*Message, error) { // TO
 }
 
 func (m *MessageRepoPG) DeleteMessage(messageID int64) (bool, error) {
-	err := m.db.Delete(Message{}, messageID).Error
+	res := m.db.Delete(Message{}, messageID)
+	err := res.Error
 	if err != nil {
 		return false, err
+	}
+	if res.RowsAffected < 1 {
+		return false, nil
 	}
 	return true, nil
 }
 
 func (m *MessageRepoPG) DeleteMessageForUser(messageID, userID int64) (bool, error) {
-	err := m.db.Exec("UPDATE messages SET deleted_users = array_append(deleted_users,?) WHERE id = ?", userID, messageID).Error
+	res := m.db.Exec("UPDATE messages SET deleted_users = array_append(deleted_users,?) WHERE id = ?", userID, messageID)
+	err := res.Error
 	if err != nil {
 		return false, err
+	}
+	if res.RowsAffected < 1 {
+		return false, nil
 	}
 	return true, nil
 }

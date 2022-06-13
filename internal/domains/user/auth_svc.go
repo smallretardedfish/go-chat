@@ -1,16 +1,15 @@
 package user
 
 import (
-	"fmt"
 	"github.com/smallretardedfish/go-chat/internal/repositories/user_cred_repo"
 	"github.com/smallretardedfish/go-chat/internal/repositories/user_repo"
 	"golang.org/x/crypto/bcrypt"
 )
 
 type AuthService interface {
-	SingIn(email, password string) (*User, error) // bcrypt
+	SingIn(email, password string) (*User, error)
 	SignUp(user User, credentials UserCredentials) (*User, error)
-	UpdatePassword(userID int64, password string) (bool, error)
+	UpdatePassword(userID int64, oldPassword, newPassword string) (bool, error)
 }
 
 type AuthServiceImpl struct {
@@ -24,37 +23,43 @@ func NewAuthServiceImpl(userCredRepo user_cred_repo.UserCredentialsRepo, userRep
 
 func (a *AuthServiceImpl) SingIn(email, password string) (*User, error) {
 	credentials, err := a.userCredRepo.GetUserCredentials(email)
-	if err != nil {
-		return nil, fmt.Errorf("error while looking for email: %v", err)
+	if err != nil || credentials == nil {
+		return nil, err
 	}
 	if err := bcrypt.CompareHashAndPassword([]byte(credentials.Password), []byte(password)); err != nil {
-		return nil, err
+		return nil, nil
 	}
-	user, err := a.userRepo.GetUserByEmail(email)
+	repoUser, err := a.userRepo.GetUserByEmail(email)
 	if err != nil {
 		return nil, err
 	}
-	domainUser := repoUserToDomainUser(*user)
+	user := repoUserToUser(*repoUser)
 
-	return &domainUser, nil
+	return &user, nil
 }
 
+//TODO use bcrypt here
 func (a *AuthServiceImpl) SignUp(user User, credentials UserCredentials) (*User, error) {
-	domainUser := domainUserToRepoUser(user)
+	domainUser := userToRepoUser(user)
 	createdUser, err := a.userRepo.CreateUser(domainUser)
-	if err != nil {
+	if err != nil || createdUser == nil {
 		return nil, err
 	}
 	repoCreds := domainCredentialsToRepoCredentials(credentials)
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(repoCreds.Password), bcrypt.DefaultCost)
+	if err != nil {
+		return nil, err
+	}
+	repoCreds.Password = string(hashedPassword)
 
 	if _, err := a.userCredRepo.CreateUserCredentials(repoCreds); err != nil {
 		return nil, err
 	}
-	usr := repoUserToDomainUser(*createdUser)
+	usr := repoUserToUser(*createdUser)
 	return &usr, nil
 }
 
-func (a *AuthServiceImpl) UpdatePassword(id int64, oldPassword, newPassword string) (bool, error) { // why id ???
+func (a *AuthServiceImpl) UpdatePassword(userID int64, oldPassword, newPassword string) (bool, error) {
 	//TODO implement method
 	panic("implement me")
 }

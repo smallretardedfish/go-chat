@@ -2,12 +2,12 @@ package chat
 
 import (
 	"github.com/smallretardedfish/go-chat/internal/repositories/room_repo"
+	"github.com/smallretardedfish/go-chat/tools/slice"
 )
 
 type RoomService interface {
 	GetRoom(userID, roomID int64) (*Room, error)
 	GetRooms(limit, offset, userID int64) ([]Room, error)
-	GetUsers(roomID, userID int64) ([]User, error)
 	CreateRoom(room Room, userIDs []int64) (*Room, error)
 	UpdateRoom(userID int64, room Room) (*Room, error)
 	DeleteRoom(userID, roomID int64) (bool, error) // TODO research whether is this total deletion of room??
@@ -21,60 +21,59 @@ type RoomServiceImpl struct {
 
 func (r *RoomServiceImpl) GetRoom(userID, roomID int64) (*Room, error) {
 	room, err := r.roomRepo.GetRoom(userID, roomID)
-	if err != nil {
+	if err != nil || room == nil {
 		return nil, err
 	}
 	//	log.Println("REPO ROOM OWNER NAME IS:", room.Owner.Name)
 	//	log.Println("REPO ROOM USERS ARE:", room.Users)
 
-	res := repoRoomToDomainRoom(*room)
+	res := repoRoomToRoom(*room)
 	return &res, nil
 }
 
+// TODO use limit offset
 func (r *RoomServiceImpl) GetRooms(limit, offset, userID int64) ([]Room, error) {
-	rooms, err := r.roomRepo.GetRooms(userID)
+	rooms, err := r.roomRepo.GetRooms(userID, &room_repo.RoomFilter{
+		Limit:  &limit,
+		Offset: &offset,
+	})
 	if err != nil {
 		return nil, err
 	}
-	var res []Room
-	for i := range rooms {
-		room := repoRoomToDomainRoom(rooms[i])
-		res = append(res, room)
-	}
-	return res, nil
+	return slice.Map(rooms, repoRoomToRoom), nil
 }
 
-func (r *RoomServiceImpl) GetUsers(roomID, userID int64) ([]User, error) {
-	room, err := r.GetRoom(userID, roomID)
-	if err != nil {
-		return nil, err
-	}
-	return room.Users, nil
-}
-
+//TODO use bulk insert and also add owner
 func (r *RoomServiceImpl) CreateRoom(room Room, userIDs []int64) (*Room, error) {
-	repoRoom := domainRoomToRepoRoom(room)
+	repoRoom := RoomToRepoRoom(room)
 	createdRoom, err := r.roomRepo.CreateRoom(repoRoom)
 	if err != nil {
 		return nil, err
 	}
+	members := []room_repo.RoomUser{{RoomID: createdRoom.ID, UserID: createdRoom.OwnerID}} // first member of room is owner
+
 	for _, userID := range userIDs {
-		_, err := r.AddUserToRoom(userID, createdRoom.ID)
-		if err != nil {
-			return nil, err
+		member := room_repo.RoomUser{
+			RoomID: createdRoom.ID,
+			UserID: userID,
 		}
+		members = append(members, member)
 	}
-	res := repoRoomToDomainRoom(*createdRoom)
+
+	if _, err := r.roomRepo.CreateRoomUsers(members); err != nil { // inserting all members together
+		return nil, err
+	}
+	res := repoRoomToRoom(*createdRoom)
 	return &res, nil
 }
 
 func (r *RoomServiceImpl) UpdateRoom(userID int64, room Room) (*Room, error) {
-	repoRoom := domainRoomToRepoRoom(room)
+	repoRoom := RoomToRepoRoom(room)
 	updatedRoom, err := r.roomRepo.UpdateRoom(userID, repoRoom)
 	if err != nil {
 		return nil, err
 	}
-	res := repoRoomToDomainRoom(*updatedRoom)
+	res := repoRoomToRoom(*updatedRoom)
 	return &res, nil
 }
 

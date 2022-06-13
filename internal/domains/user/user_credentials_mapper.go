@@ -10,6 +10,7 @@ func repoCredentialsToDomainCredentials(userCredentials user_cred_repo.UserCrede
 		Password: userCredentials.Password,
 	}
 }
+
 func domainCredentialsToRepoCredentials(userCredentials UserCredentials) user_cred_repo.UserCredentials {
 	return user_cred_repo.UserCredentials{
 		Email:    userCredentials.Email,

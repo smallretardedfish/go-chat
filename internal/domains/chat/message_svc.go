@@ -1,14 +1,16 @@
 package chat
 
-import "github.com/smallretardedfish/go-chat/internal/repositories/message_repo"
+import (
+	"github.com/smallretardedfish/go-chat/internal/repositories/message_repo"
+	"github.com/smallretardedfish/go-chat/tools/slice"
+)
 
 type MessageService interface {
 	GetMessages(limit, offset, userID, chatID int64) ([]Message, error) // get certain messages in room
 	CreateMessage(message Message) (*Message, error)
 	UpdateMessage(message Message) (*Message, error)     // change content of message
-	ReadMessage(messageID, userID int64) (bool, error)   // update with read status
-	DeleteMessage(userID, messageID int64) (bool, error) // just update deleted_user list
-	DeleteMyMessage(messageID int64) (bool, error)       // totally delete
+	DeleteMessage(userID, messageID int64) (bool, error) // totally delete
+	DeleteMyMessage(messageID int64) (bool, error)       // just update deleted_user list
 }
 
 type MessageServiceImpl struct {
@@ -18,7 +20,6 @@ type MessageServiceImpl struct {
 func (m *MessageServiceImpl) GetMessages(limit, offset *int64, userID, roomID int64) ([]Message, error) {
 
 	messages, err := m.messageRepo.GetMessages(&message_repo.MessageFilter{
-		Search: nil,
 		Limit:  limit,
 		Offset: offset,
 	}, userID, roomID)
@@ -26,14 +27,7 @@ func (m *MessageServiceImpl) GetMessages(limit, offset *int64, userID, roomID in
 	if err != nil {
 		return nil, err
 	}
-
-	var result []Message
-	for i := range messages {
-		msg := repoMessageToDomainMessage(messages[i])
-		result = append(result, msg)
-	}
-
-	return result, nil
+	return slice.Map(messages, repoMessageToDomainMessage), nil
 }
 
 func (m *MessageServiceImpl) CreateMessage(message Message) (*Message, error) {
@@ -56,12 +50,7 @@ func (m *MessageServiceImpl) UpdateMessage(message Message) (*Message, error) { 
 	return &res, nil
 }
 
-func (m *MessageServiceImpl) ReadMessage(messageID, userID int64) (bool, error) { // ??
-	//TODO implement me
-	panic("implement me")
-}
-
-func (m *MessageServiceImpl) DeleteMessage(userID, messageID int64) (bool, error) {
+func (m *MessageServiceImpl) DeleteMessageForUser(userID, messageID int64) (bool, error) {
 	ok, err := m.messageRepo.DeleteMessageForUser(userID, messageID)
 	if err != nil {
 		return false, err
@@ -69,7 +58,7 @@ func (m *MessageServiceImpl) DeleteMessage(userID, messageID int64) (bool, error
 	return ok, nil
 }
 
-func (m *MessageServiceImpl) DeleteMyMessage(messageID int64) (bool, error) {
+func (m *MessageServiceImpl) DeleteMessage(messageID int64) (bool, error) {
 	ok, err := m.messageRepo.DeleteMessage(messageID)
 	if err != nil {
 		return false, err

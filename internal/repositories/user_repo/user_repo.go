@@ -19,8 +19,6 @@ type UserRepoPG struct {
 	db *gorm.DB
 }
 
-var _ UserRepo = (*UserRepoPG)(nil)
-
 func (u *UserRepoPG) GetUserByID(userID int64) (*User, error) {
 	user := User{}
 	err := u.db.Model(User{}).First(&user, userID).Error
