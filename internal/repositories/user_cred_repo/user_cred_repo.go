@@ -25,7 +25,7 @@ func (u *UserCredentialsPG) CreateUserCredentials(userCredentials UserCredential
 
 func (u *UserCredentialsPG) GetUserCredentials(email string) (*UserCredentials, error) {
 	userCredentials := UserCredentials{}
-	err := u.db.Model(UserCredentials{}).First(&userCredentials, email).Error
+	err := u.db.Model(UserCredentials{}).First(&userCredentials, "email = ?", email).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil

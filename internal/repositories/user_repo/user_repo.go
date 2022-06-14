@@ -33,7 +33,7 @@ func (u *UserRepoPG) GetUserByID(userID int64) (*User, error) {
 
 func (u *UserRepoPG) GetUserByEmail(email string) (*User, error) {
 	user := User{}
-	err := u.db.Model(User{}).First(&user, email).Error
+	err := u.db.Model(User{}).First(&user, "email = ?", email).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil

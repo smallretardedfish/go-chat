@@ -31,7 +31,6 @@ func (r *RoomServiceImpl) GetRoom(userID, roomID int64) (*Room, error) {
 	return &res, nil
 }
 
-// TODO use limit offset
 func (r *RoomServiceImpl) GetRooms(limit, offset, userID int64) ([]Room, error) {
 	rooms, err := r.roomRepo.GetRooms(userID, &room_repo.RoomFilter{
 		Limit:  &limit,
@@ -43,7 +42,6 @@ func (r *RoomServiceImpl) GetRooms(limit, offset, userID int64) ([]Room, error) 
 	return slice.Map(rooms, repoRoomToRoom), nil
 }
 
-//TODO use bulk insert and also add owner
 func (r *RoomServiceImpl) CreateRoom(room Room, userIDs []int64) (*Room, error) {
 	repoRoom := RoomToRepoRoom(room)
 	createdRoom, err := r.roomRepo.CreateRoom(repoRoom)
