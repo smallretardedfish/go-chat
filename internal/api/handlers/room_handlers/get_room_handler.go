@@ -6,20 +6,17 @@ import (
 	"github.com/smallretardedfish/go-chat/configs"
 	"github.com/smallretardedfish/go-chat/internal/domains/chat"
 	"github.com/smallretardedfish/go-chat/internal/domains/user"
-	"github.com/smallretardedfish/go-chat/tools/slice"
 	"net/http"
 	"strconv"
 )
 
 //TODO reseach error handler
-func GetRoomsHandler(log configs.Logger, service chat.RoomService) func(c *fiber.Ctx) error {
+func GetRoomHandler(log configs.Logger, service chat.RoomService) func(c *fiber.Ctx) error {
 	return func(c *fiber.Ctx) error {
-		limitStr := c.Query("limit", "100")
-		offsetStr := c.Query("offset", "0")
-		limit, err := strconv.Atoi(limitStr)
-		offset, err := strconv.Atoi(offsetStr)
+		roomIdStr := c.Params("id")
+		roomID, err := strconv.Atoi(roomIdStr)
 		if err != nil {
-			c.Status(http.StatusInternalServerError)
+			c.Status(http.StatusBadRequest)
 			return err
 		}
 		log.Info(c.Context().UserValue("user"))
@@ -28,13 +25,21 @@ func GetRoomsHandler(log configs.Logger, service chat.RoomService) func(c *fiber
 		if !ok {
 			return fmt.Errorf("error: can`t assert user from context to *user.User")
 		}
-		domainRooms, err := service.GetRooms(int64(limit), int64(offset), usr.ID)
-		rooms := slice.Map(domainRooms, domainRoomToRoom)
+		domainRoom, err := service.GetRoom(usr.ID, int64(roomID))
 		if err != nil {
 			c.Status(http.StatusInternalServerError)
 			return err
 		}
-		c.Status(http.StatusOK)
-		return c.JSON(rooms)
+		if domainRoom == nil { // TODO research how to handle if user got no room
+			c.JSON(nil) // probably that way
+			return nil
+		}
+		room := domainRoomToRoom(*domainRoom)
+		if err != nil {
+			c.Status(http.StatusInternalServerError)
+			return err
+		}
+
+		return c.Status(http.StatusOK).JSON(room)
 	}
 }

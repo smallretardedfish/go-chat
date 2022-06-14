@@ -2,7 +2,7 @@ package main
 
 import (
 	"github.com/smallretardedfish/go-chat/configs"
-	"github.com/smallretardedfish/go-chat/internal/api"
+	"github.com/smallretardedfish/go-chat/internal/api/server"
 	"github.com/smallretardedfish/go-chat/internal/domains/chat"
 	"github.com/smallretardedfish/go-chat/internal/domains/user"
 	"github.com/smallretardedfish/go-chat/internal/repositories/room_repo"
@@ -33,8 +33,8 @@ func main() {
 	authSvc := user.NewAuthServiceImpl(credsRepo, userRepo)
 	userSvc := user.NewUserServiceImpl(userRepo)
 
-	server := api.NewHTTPServer(log, roomSvc, userSvc, authSvc)
-	if err := server.Start(cfg.ServerAddress); err != nil {
+	httpServer := server.NewHTTPServer(log, roomSvc, userSvc, authSvc)
+	if err := httpServer.Start(cfg.ServerAddress); err != nil {
 		log.Fatal(err)
 	}
 }

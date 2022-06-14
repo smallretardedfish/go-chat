@@ -1,4 +1,4 @@
-package api
+package server
 
 import (
 	"github.com/gofiber/fiber/v2"
@@ -29,16 +29,17 @@ func (s *HTTPServer) Start(serverAddress string) error {
 	app := fiber.New()
 	publicGroup := app.Group("/api/v1")
 	publicGroup.Post("/sign-up", auth_handlers.RegisterHandler(s.log, s.authService))
-	publicGroup.Post("/sign-in", nil)
-	publicGroup.Get("/rooms", room_handlers.GetRoomsHandler(s.log, s.roomService))
+	publicGroup.Post("/sign-in", auth_handlers.SignInHandler(s.log, s.authService))
 
 	privateGroup := app.Group("/api/v1", middleware.AuthMiddleware(s.log, s.userService))
+	privateGroup.Get("/rooms", room_handlers.GetRoomsHandler(s.log, s.roomService))
+	privateGroup.Get("/rooms/:id", room_handlers.GetRoomHandler(s.log, s.roomService))
+	privateGroup.Post("/rooms", room_handlers.CreateRoomHandler(s.log, s.roomService))
+	privateGroup.Post("rooms/add", room_handlers.AddUserToRoomHandler(s.log, s.roomService))
+	privateGroup.Delete("rooms/add", room_handlers.RemoveUserFromRoomHandler(s.log, s.roomService))
 
-	//public for testing
-	privateGroup.Get("/rooms/:id", nil)
-	privateGroup.Post("/rooms", nil)
-	privateGroup.Put("/rooms", nil)
-	privateGroup.Delete("/rooms/:id", nil)
+	//privateGroup.Put("/rooms", nil)
+	//privateGroup.Delete("/rooms/:id", nil)
 
 	//TODO implement other endpoints
 	// messages are processed by WebSockets

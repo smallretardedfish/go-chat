@@ -9,8 +9,8 @@ import (
 
 func RegisterHandler(log configs.Logger, authSvc user.AuthService) func(c *fiber.Ctx) error {
 	return func(c *fiber.Ctx) error {
-		userInp := UserInput{}
-		err := c.BodyParser(&userInp)
+		userInp := &SignUpInput{}
+		err := c.BodyParser(userInp)
 		if err != nil {
 			c.Status(http.StatusInternalServerError)
 			return err
@@ -27,6 +27,7 @@ func RegisterHandler(log configs.Logger, authSvc user.AuthService) func(c *fiber
 		domainUserCreds := userCredentialsToDomainUserCredentials(userCreds)
 
 		if _, err := authSvc.SignUp(domainUser, domainUserCreds); err != nil {
+			log.Error("error while signing up new user:", err)
 			c.Status(http.StatusInternalServerError)
 			return err
 		}
