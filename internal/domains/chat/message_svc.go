@@ -27,26 +27,26 @@ func (m *MessageServiceImpl) GetMessages(limit, offset *int64, userID, roomID in
 	if err != nil {
 		return nil, err
 	}
-	return slice.Map(messages, repoMessageToDomainMessage), nil
+	return slice.Map(messages, repoMessageToMessage), nil
 }
 
 func (m *MessageServiceImpl) CreateMessage(message Message) (*Message, error) {
-	repoMsg := domainMessageToRepoMessage(message)
+	repoMsg := messageToRepoMessage(message)
 	msg, err := m.messageRepo.CreateMessage(repoMsg)
 	if err != nil {
 		return nil, err
 	}
-	res := repoMessageToDomainMessage(*msg)
+	res := repoMessageToMessage(*msg)
 	return &res, nil
 }
 
 func (m *MessageServiceImpl) UpdateMessage(message Message) (*Message, error) { //TODO fix deleted_users loss after mapping
-	repoMsg := domainMessageToRepoMessage(message)
+	repoMsg := messageToRepoMessage(message)
 	msg, err := m.messageRepo.UpdateMessage(repoMsg)
 	if err != nil {
 		return nil, err
 	}
-	res := repoMessageToDomainMessage(*msg)
+	res := repoMessageToMessage(*msg)
 	return &res, nil
 }
 

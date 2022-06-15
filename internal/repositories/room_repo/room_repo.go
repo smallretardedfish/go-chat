@@ -9,7 +9,7 @@ import (
 
 type RoomRepo interface {
 	GetRoom(userID, roomID int64) (*Room, error)
-	GetRooms(userID int64, roomFilter *RoomFilter) ([]Room, error) // TODO add filtering
+	GetRooms(userID int64, roomFilter *RoomFilter) ([]Room, error)
 	CreateRoom(room Room) (*Room, error)
 	CreateRoomUser(roomUser RoomUser) (*RoomUser, error)
 	CreateRoomUsers(roomUser []RoomUser) ([]RoomUser, error)
@@ -60,7 +60,7 @@ func (r *RoomRepoPG) GetRooms(userID int64, roomFilter *RoomFilter) ([]Room, err
 	return rooms, nil
 }
 
-func (r *RoomRepoPG) CreateRoomUser(roomUser RoomUser) (*RoomUser, error) { // TODO use batch insert
+func (r *RoomRepoPG) CreateRoomUser(roomUser RoomUser) (*RoomUser, error) {
 	err := r.db.
 		Raw("INSERT INTO room_users(user_id,room_id) VALUES(?,?) RETURNING *", roomUser.UserID, roomUser.RoomID).
 		Scan(&roomUser).Error

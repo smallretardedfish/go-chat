@@ -10,7 +10,7 @@ type RoomService interface {
 	GetRooms(limit, offset, userID int64) ([]Room, error)
 	CreateRoom(room Room, userIDs []int64) (*Room, error)
 	UpdateRoom(userID int64, room Room) (*Room, error)
-	DeleteRoom(userID, roomID int64) (bool, error) // TODO research whether is this total deletion of room??
+	DeleteRoom(userID, roomID int64) (bool, error)
 	AddUserToRoom(userID, roomID int64) (bool, error)
 	DeleteUserFromRoom(userID, roomID int64) (bool, error)
 }
@@ -24,8 +24,6 @@ func (r *RoomServiceImpl) GetRoom(userID, roomID int64) (*Room, error) {
 	if err != nil || room == nil {
 		return nil, err
 	}
-	//	log.Println("REPO ROOM OWNER NAME IS:", room.Owner.Name)
-	//	log.Println("REPO ROOM USERS ARE:", room.Users)
 
 	res := repoRoomToRoom(*room)
 	return &res, nil
@@ -76,7 +74,7 @@ func (r *RoomServiceImpl) UpdateRoom(userID int64, room Room) (*Room, error) {
 }
 
 func (r *RoomServiceImpl) DeleteRoom(userID, roomID int64) (bool, error) {
-	ok, err := r.roomRepo.DeleteRoomUser(roomID, userID)
+	ok, err := r.roomRepo.DeleteRoom(roomID, userID)
 	if err != nil {
 		return false, err
 	}

@@ -27,7 +27,7 @@ func (u *UserServiceImpl) GetUsers(userFilter *UserFilter) ([]User, error) {
 
 func (u *UserServiceImpl) GetUser(userID int64) (*User, error) {
 	usr, err := u.userRepo.GetUserByID(userID)
-	if err != nil {
+	if err != nil || usr == nil {
 		return nil, err
 	}
 	user := repoUserToUser(*usr)

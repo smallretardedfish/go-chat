@@ -6,8 +6,6 @@ import (
 	"github.com/smallretardedfish/go-chat/tools/slice"
 )
 
-// TODO refactor with slice.Map
-
 func repoUserToUser(repoUser user_repo.User) User {
 	return User{
 		ID:   repoUser.ID,
@@ -37,7 +35,6 @@ func RoomToRepoRoom(room Room) room_repo.Room {
 		Name:      room.Name,
 		OwnerID:   room.OwnerID,
 		Type:      room.Type,
-		Users:     nil, // ??
 		CreatedAt: room.CreatedAt,
 		UpdatedAt: room.UpdatedAt,
 	}

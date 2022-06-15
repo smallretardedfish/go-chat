@@ -4,9 +4,7 @@ import (
 	"github.com/smallretardedfish/go-chat/internal/repositories/message_repo"
 )
 
-// TODO make mapper from repo layer to service
-
-func repoMessageToDomainMessage(message message_repo.Message) Message {
+func repoMessageToMessage(message message_repo.Message) Message {
 	return Message{
 		ID:      message.ID,
 		Text:    message.Text,
@@ -21,7 +19,7 @@ func repoMessageToDomainMessage(message message_repo.Message) Message {
 	}
 }
 
-func domainMessageToRepoMessage(message Message) message_repo.Message { // TODO implement proper mapping
+func messageToRepoMessage(message Message) message_repo.Message {
 	return message_repo.Message{
 		ID:        message.ID,
 		Text:      message.Text,
