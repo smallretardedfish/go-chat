@@ -32,13 +32,13 @@ func AuthMiddleware(log configs.Logger, userService user.UserService) func(c *fi
 		log.Info("PARSING TOKEN")
 		if claims, ok := token.Claims.(*Claims); ok && token.Valid {
 			id := claims.UserID
-			getUser, err := userService.GetUser(id)
-			log.Info("User got from token: ", getUser)
+			usr, err := userService.GetUser(id)
+			log.Info("User got from token: ", usr)
 			if err != nil {
 				c.Status(http.StatusInternalServerError)
 				return err
 			}
-			c.Context().SetUserValue("user", getUser)
+			c.Context().SetUserValue("user", usr)
 		}
 		return c.Next()
 	}
