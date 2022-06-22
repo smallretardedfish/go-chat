@@ -6,9 +6,9 @@ type Logger interface {
 	Info(args ...interface{})
 	Warn(args ...interface{})
 	Error(args ...interface{})
+	Debug(args ...interface{})
 }
 
-//TODO check params of logger
 func NewLogger() *logrus.Logger {
 	return logrus.New()
 }

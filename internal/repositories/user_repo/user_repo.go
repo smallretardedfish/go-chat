@@ -73,7 +73,7 @@ func (u *UserRepoPG) CreateUser(user User) (*User, error) {
 }
 
 func (u *UserRepoPG) UpdateUser(user User) (*User, error) {
-	err := u.db.Model(User{}).Where("id = ?", user.ID).Save(&user).Error
+	err := u.db.Model(User{}).Where("id = ?", user.ID).Omit("updated_at", "created_at").Save(&user).Error
 	if err != nil {
 		return nil, err
 	}

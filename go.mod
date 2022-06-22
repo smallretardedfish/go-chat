@@ -5,6 +5,7 @@ go 1.18
 require (
 	github.com/caarlos0/env v3.5.0+incompatible
 	github.com/gofiber/fiber/v2 v2.34.0
+	github.com/gofiber/websocket/v2 v2.0.22
 	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/joho/godotenv v1.4.0
 	github.com/lib/pq v1.10.2
@@ -16,6 +17,7 @@ require (
 
 require (
 	github.com/andybalholm/brotli v1.0.4 // indirect
+	github.com/fasthttp/websocket v1.5.0 // indirect
 	github.com/jackc/chunkreader/v2 v2.0.1 // indirect
 	github.com/jackc/pgconn v1.12.1 // indirect
 	github.com/jackc/pgio v1.0.0 // indirect
@@ -27,6 +29,7 @@ require (
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.4 // indirect
 	github.com/klauspost/compress v1.15.0 // indirect
+	github.com/savsgio/gotils v0.0.0-20211223103454-d0aaa54c5899 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasthttp v1.37.0 // indirect
 	github.com/valyala/tcplisten v1.0.0 // indirect

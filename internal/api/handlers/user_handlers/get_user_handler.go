@@ -8,7 +8,6 @@ import (
 	"strconv"
 )
 
-//TODO reseach error handler
 func GetUserHandler(log configs.Logger, service user.UserService) func(c *fiber.Ctx) error {
 	return func(c *fiber.Ctx) error {
 		userIdStr := c.Params("id")
@@ -22,10 +21,10 @@ func GetUserHandler(log configs.Logger, service user.UserService) func(c *fiber.
 			c.Status(http.StatusInternalServerError)
 			return err
 		}
-		if domainUser == nil { // TODO research how to handle no user
+		if domainUser == nil {
+			c.Status(http.StatusNotFound)
 			log.Warn("No such user present in repo")
-			c.JSON(nil) // probably that way
-			return nil
+			return c.JSON(nil) // probably that way
 		}
 		usr := domainUserToUser(*domainUser)
 		if err != nil {

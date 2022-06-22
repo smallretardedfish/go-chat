@@ -1,7 +1,6 @@
 package room_handlers
 
 import (
-	"fmt"
 	"github.com/gofiber/fiber/v2"
 	"github.com/smallretardedfish/go-chat/configs"
 	"github.com/smallretardedfish/go-chat/internal/domains/chat"
@@ -14,20 +13,16 @@ import (
 //TODO reseach error handler
 func GetRoomsHandler(log configs.Logger, service chat.RoomService) func(c *fiber.Ctx) error {
 	return func(c *fiber.Ctx) error {
-		limitStr := c.Query("limit", "100")
+		limitStr := c.Query("limit", "10")
 		offsetStr := c.Query("offset", "0")
-		limit, err := strconv.Atoi(limitStr)
+		limit, err := strconv.Atoi(limitStr) //TODO change Atoi to ParseInt
 		offset, err := strconv.Atoi(offsetStr)
 		if err != nil {
 			c.Status(http.StatusInternalServerError)
 			return err
 		}
-		log.Info(c.Context().UserValue("user"))
-		usr, ok := c.Context().UserValue("user").(*user.User)
-		log.Info(usr)
-		if !ok {
-			return fmt.Errorf("error: can`t assert user from context to *user.User")
-		}
+		usr := c.Context().UserValue("user").(*user.User)
+
 		domainRooms, err := service.GetRooms(int64(limit), int64(offset), usr.ID)
 		rooms := slice.Map(domainRooms, domainRoomToRoom)
 		if err != nil {

@@ -8,8 +8,6 @@ type User struct {
 	ID    int64  `json:"id"`
 	Name  string `json:"name"`
 	Email string `json:"email"`
-	//CreatedAt time.Time
-	//UpdatedAt time.Time
 }
 
 func userToDomainUser(usr User) user.User {

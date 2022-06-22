@@ -26,11 +26,28 @@ func RegisterHandler(log configs.Logger, authSvc user.AuthService) func(c *fiber
 		domainUser := userToDomainUser(usr)
 		domainUserCreds := userCredentialsToDomainUserCredentials(userCreds)
 
-		if _, err := authSvc.SignUp(domainUser, domainUserCreds); err != nil {
-			log.Error("error while signing up new user:", err)
+		signedUser, err := authSvc.SignUp(domainUser, domainUserCreds)
+		if err != nil {
 			c.Status(http.StatusInternalServerError)
 			return err
 		}
-		return nil
+		if signedUser == nil {
+			c.Status(http.StatusUnauthorized)
+			return nil
+		}
+		token, err := CreateToken(signedUser.ID)
+		if err != nil {
+			c.Status(http.StatusInternalServerError)
+			return err
+		}
+
+		return c.Status(http.StatusOK).
+			JSON(struct {
+				User  User   `json:"user"`
+				Token string `json:"token"`
+			}{
+				User:  domainUserToUser(*signedUser),
+				Token: token,
+			})
 	}
 }

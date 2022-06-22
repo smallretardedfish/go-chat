@@ -38,7 +38,6 @@ func (a *AuthServiceImpl) SingIn(email, password string) (*User, error) {
 	return &user, nil
 }
 
-//TODO use bcrypt here
 func (a *AuthServiceImpl) SignUp(user User, credentials UserCredentials) (*User, error) {
 	domainUser := userToRepoUser(user)
 	createdUser, err := a.userRepo.CreateUser(domainUser)

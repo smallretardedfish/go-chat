@@ -11,11 +11,11 @@ type RoomRepo interface {
 	GetRoom(userID, roomID int64) (*Room, error)
 	GetRooms(userID int64, roomFilter *RoomFilter) ([]Room, error)
 	CreateRoom(room Room) (*Room, error)
-	CreateRoomUser(roomUser RoomUser) (*RoomUser, error)
-	CreateRoomUsers(roomUser []RoomUser) ([]RoomUser, error)
-	DeleteRoomUser(roomID, userID int64) (bool, error)
+	CreateRoomUsers(roomUser []RoomUser) error
+	DeleteRoomUsers(initiatorID, roomID int64, toRemove []int64) (bool, error)
 	UpdateRoom(userID int64, room Room) (*Room, error)
 	DeleteRoom(userID, roomID int64) (bool, error)
+	DeleteCurrentRoomUser(roomID, userID int64) (bool, error)
 }
 
 type RoomRepoPG struct {
@@ -60,27 +60,18 @@ func (r *RoomRepoPG) GetRooms(userID int64, roomFilter *RoomFilter) ([]Room, err
 	return rooms, nil
 }
 
-func (r *RoomRepoPG) CreateRoomUser(roomUser RoomUser) (*RoomUser, error) {
-	err := r.db.
-		Raw("INSERT INTO room_users(user_id,room_id) VALUES(?,?) RETURNING *", roomUser.UserID, roomUser.RoomID).
-		Scan(&roomUser).Error
-	if err != nil {
-		return nil, err
-	}
-	return &roomUser, nil
-}
-
 //non-native SQL is used to make batch insert
-func (r *RoomRepoPG) CreateRoomUsers(roomUsers []RoomUser) ([]RoomUser, error) {
+func (r *RoomRepoPG) CreateRoomUsers(roomUsers []RoomUser) error {
 	err := r.db.Create(&roomUsers).Error
 	if err != nil {
-		return nil, err
+		return err
 	}
-	return roomUsers, nil
+	return nil
 }
 
-func (r *RoomRepoPG) DeleteRoomUser(roomID, userID int64) (bool, error) {
-	res := r.db.Exec("DELETE FROM room_users WHERE user_id = ? AND room_id = ? ", userID, roomID)
+func (r *RoomRepoPG) DeleteCurrentRoomUser(roomID, userID int64) (bool, error) {
+	res := r.db.Raw("DELETE FROM room_users AS ru WHERE ru.room = ? AND ru.user = ?",
+		roomID, userID)
 	err := res.Error
 	if err != nil {
 		return false, err
@@ -91,7 +82,21 @@ func (r *RoomRepoPG) DeleteRoomUser(roomID, userID int64) (bool, error) {
 	return true, nil
 }
 
-func (r *RoomRepoPG) CreateRoom(room Room) (*Room, error) { // TODO add owner in service
+func (r *RoomRepoPG) DeleteRoomUsers(roomID, initiatorID int64, toRemove []int64) (bool, error) {
+	res := r.db.Raw("DELETE FROM room_users AS ru INNER JOIN rooms AS r "+
+		"ON ru.room_id = r.id  WHERE roomID = ? AND r.owner_id = ? AND ru.user_id IN ?",
+		roomID, initiatorID, toRemove)
+	err := res.Error
+	if err != nil {
+		return false, err
+	}
+	if res.RowsAffected < 1 {
+		return false, nil
+	}
+	return true, nil
+}
+
+func (r *RoomRepoPG) CreateRoom(room Room) (*Room, error) {
 	err := r.db.
 		Raw("INSERT INTO rooms(owner_id,name) VALUES(?,?) RETURNING *", room.OwnerID, room.Name).
 		Scan(&room).Error

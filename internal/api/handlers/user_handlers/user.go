@@ -15,3 +15,11 @@ func domainUserToUser(u user.User) User {
 		Email: u.Email,
 	}
 }
+
+func userToDomainUser(u User) user.User {
+	return user.User{
+		ID:    u.ID,
+		Name:  u.Name,
+		Email: u.Email,
+	}
+}

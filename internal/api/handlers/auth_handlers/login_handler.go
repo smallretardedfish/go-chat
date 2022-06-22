@@ -6,13 +6,14 @@ import (
 	"github.com/smallretardedfish/go-chat/configs"
 	"github.com/smallretardedfish/go-chat/internal/domains/user"
 	"net/http"
-	"time"
 )
 
-var jwtKey = []byte("jwt-secret") //  TODO check how to store this thing
+//TODO create also add refresh token
+
+var jwtKey = []byte("jwt-secret") //  TODO move to env file
 
 type Claims struct {
-	UserID int `json:"user_id"`
+	UserID int64 `json:"user_id"`
 	jwt.StandardClaims
 }
 
@@ -23,7 +24,6 @@ func SignInHandler(log configs.Logger, authSvc user.AuthService) func(c *fiber.C
 			c.Status(http.StatusInternalServerError)
 			return err
 		}
-		log.Info(authCredentials)
 		signedUser, err := authSvc.SingIn(authCredentials.Email, authCredentials.Password)
 		if err != nil {
 			c.Status(http.StatusInternalServerError)
@@ -33,26 +33,20 @@ func SignInHandler(log configs.Logger, authSvc user.AuthService) func(c *fiber.C
 			c.Status(http.StatusUnauthorized)
 			return nil
 		}
-		//TODO change JWT token expiration time
-		expTime := time.Now().Add(30 * 24 * time.Hour).Unix() // 30 days just for local testing
-		claims := Claims{
-			UserID: int(signedUser.ID),
-			StandardClaims: jwt.StandardClaims{
-				ExpiresAt: expTime,
-			},
-		}
 
-		jwtToken := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-
-		tokenString, err := jwtToken.SignedString(jwtKey)
+		usr := domainUserToUser(*signedUser)
+		token, err := CreateToken(usr.ID)
 		if err != nil {
-			log.Warn(err)
 			c.Status(http.StatusInternalServerError)
 			return err
 		}
-
-		c.Set("Token", tokenString)
-
-		return nil
+		return c.Status(http.StatusOK).
+			JSON(struct {
+				User  User   `json:"user"`
+				Token string `json:"token"`
+			}{
+				User:  usr,
+				Token: token,
+			})
 	}
 }

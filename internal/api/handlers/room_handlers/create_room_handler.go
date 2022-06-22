@@ -1,7 +1,6 @@
 package room_handlers
 
 import (
-	"fmt"
 	"github.com/gofiber/fiber/v2"
 	"github.com/smallretardedfish/go-chat/configs"
 	"github.com/smallretardedfish/go-chat/internal/domains/chat"
@@ -24,10 +23,7 @@ func CreateRoomHandler(log configs.Logger, roomService chat.RoomService) func(c 
 		}
 		domainRoom := roomToDomainRoom(data.Room)
 		ownr := c.Context().UserValue("user")
-		owner, ok := ownr.(*user.User)
-		if !ok {
-			return fmt.Errorf("error: can't get user from token")
-		}
+		owner := ownr.(*user.User)
 		domainRoom.OwnerID = owner.ID
 		if _, err := roomService.CreateRoom(domainRoom, data.Members); err != nil {
 			c.Status(http.StatusInternalServerError)

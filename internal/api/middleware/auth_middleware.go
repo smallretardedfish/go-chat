@@ -15,19 +15,25 @@ type Claims struct {
 
 func AuthMiddleware(log configs.Logger, userService user.UserService) func(c *fiber.Ctx) error {
 	return func(c *fiber.Ctx) error {
-		tokenString := c.Get("Token")
+		var tokenString string
+		if c.Get("Token") != "" {
+			tokenString = c.Get("Token")
+		} else if c.Query("token") != "" {
+			tokenString = c.Query("token")
+		}
+
 		if tokenString == "" {
 			c.Status(http.StatusUnauthorized)
 			c.Send(nil)
 			return nil
 		}
+
 		token, err := jwt.ParseWithClaims(tokenString, &Claims{}, func(token *jwt.Token) (interface{}, error) {
 			return []byte("jwt-secret"), nil // TODO maybe retrieve secret from config
 		})
 		if err != nil {
 			c.Status(http.StatusUnauthorized)
-			c.Send(nil)
-			return err
+			return c.Send(nil)
 		}
 		log.Info("PARSING TOKEN")
 		if claims, ok := token.Claims.(*Claims); ok && token.Valid {

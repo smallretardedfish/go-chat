@@ -17,7 +17,7 @@ func (c *Config) GetServerAddress() (*url.URL, error) {
 }
 
 func NewConfig() (*Config, error) {
-	_ = godotenv.Load("../.env")
+	_ = godotenv.Load(".env")
 
 	c := &Config{}
 	if err := env.Parse(c); err != nil {

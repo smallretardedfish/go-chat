@@ -10,19 +10,18 @@ import (
 func AddUserToRoomHandler(log configs.Logger, roomSvc chat.RoomService) func(c *fiber.Ctx) error {
 	return func(c *fiber.Ctx) error {
 		roomUser := &struct {
-			RoomID int64 `json:"room_id"`
-			UserID int64 `json:"user_id"`
+			RoomID  int64   `json:"room_id"`
+			UserIDs []int64 `json:"user_id"`
 		}{}
-		err := c.BodyParser(roomUser)
-		if err != nil {
+
+		if err := c.BodyParser(roomUser); err != nil {
 			c.Status(http.StatusInternalServerError)
 			return err
 		}
-		if _, err := roomSvc.AddUserToRoom(roomUser.UserID, roomUser.RoomID); err != nil {
+		if _, err := roomSvc.AddUsersToRoom(roomUser.UserIDs, roomUser.RoomID); err != nil {
 			c.Status(http.StatusInternalServerError)
 			return err
 		}
-		c.Status(http.StatusOK).Send(nil)
-		return nil
+		return c.Status(http.StatusOK).Send(nil)
 	}
 }

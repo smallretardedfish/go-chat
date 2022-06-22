@@ -6,18 +6,21 @@ import (
 	"github.com/smallretardedfish/go-chat/internal/domains/chat"
 	"github.com/smallretardedfish/go-chat/internal/domains/user"
 	"net/http"
+	"strconv"
 )
 
-func RemoveUsersFromRoomHandler(log configs.Logger, roomSvc chat.RoomService) func(c *fiber.Ctx) error {
+func RemoveCurrentUserFromRoomHandler(log configs.Logger, roomSvc chat.RoomService) func(c *fiber.Ctx) error {
 	return func(c *fiber.Ctx) error {
-		removeData := &struct {
-			RoomID   int64   `json:"room_id"`
-			ToRemove []int64 `json:"to_remove"`
-		}{}
+		roomIdStr := c.Params("room_id")
+		roomId, err := strconv.ParseInt(roomIdStr, 10, 64)
+		if err != nil {
+			c.Status(http.StatusInternalServerError)
+			return err
+		}
 
 		initiator := c.Context().UserValue("user").(*user.User)
 
-		if _, err := roomSvc.DeleteUsersFromRoom(initiator.ID, removeData.RoomID, removeData.ToRemove); err != nil {
+		if _, err := roomSvc.DeleteCurrentUser(initiator.ID, roomId); err != nil {
 			c.Status(http.StatusInternalServerError)
 			return err
 		}

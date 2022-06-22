@@ -11,8 +11,9 @@ type RoomService interface {
 	CreateRoom(room Room, userIDs []int64) (*Room, error)
 	UpdateRoom(userID int64, room Room) (*Room, error)
 	DeleteRoom(userID, roomID int64) (bool, error)
-	AddUserToRoom(userID, roomID int64) (bool, error)
-	DeleteUserFromRoom(userID, roomID int64) (bool, error)
+	AddUsersToRoom(userIDs []int64, roomID int64) (bool, error)
+	DeleteUsersFromRoom(initiatorID, roomID int64, userID []int64) (bool, error) // owner deletes batch of users
+	DeleteCurrentUser(userID, roomID int64) (bool, error)                        // user deletes themself from room
 }
 
 type RoomServiceImpl struct {
@@ -56,7 +57,7 @@ func (r *RoomServiceImpl) CreateRoom(room Room, userIDs []int64) (*Room, error) 
 		members = append(members, member)
 	}
 
-	if _, err := r.roomRepo.CreateRoomUsers(members); err != nil { // inserting all members together
+	if err := r.roomRepo.CreateRoomUsers(members); err != nil { // inserting all members together
 		return nil, err
 	}
 	res := repoRoomToRoom(*createdRoom)
@@ -81,19 +82,31 @@ func (r *RoomServiceImpl) DeleteRoom(userID, roomID int64) (bool, error) {
 	return ok, nil
 }
 
-func (r *RoomServiceImpl) AddUserToRoom(userID, roomID int64) (bool, error) {
-	_, err := r.roomRepo.CreateRoomUser(room_repo.RoomUser{ // should I create roomUser like this?
-		RoomID: roomID,
-		UserID: userID,
-	})
-	if err != nil {
+func (r *RoomServiceImpl) AddUsersToRoom(userIDs []int64, roomID int64) (bool, error) {
+
+	var RoomUsers []room_repo.RoomUser
+	for _, id := range userIDs {
+		RoomUsers = append(RoomUsers, room_repo.RoomUser{
+			RoomID: roomID,
+			UserID: id,
+		})
+	}
+	if err := r.roomRepo.CreateRoomUsers(RoomUsers); err != nil {
 		return false, err
 	}
 	return true, nil
 }
 
-func (r *RoomServiceImpl) DeleteUserFromRoom(userID, roomID int64) (bool, error) {
-	ok, err := r.roomRepo.DeleteRoomUser(roomID, userID)
+func (r *RoomServiceImpl) DeleteCurrentUser(userID, roomID int64) (bool, error) {
+	ok, err := r.roomRepo.DeleteCurrentRoomUser(userID, roomID)
+	if err != nil {
+		return false, err
+	}
+	return ok, nil
+}
+
+func (r *RoomServiceImpl) DeleteUsersFromRoom(initiatorID, roomID int64, toRemove []int64) (bool, error) {
+	ok, err := r.roomRepo.DeleteRoomUsers(initiatorID, roomID, toRemove)
 	if err != nil {
 		return false, err
 	}
