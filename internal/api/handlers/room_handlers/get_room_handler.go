@@ -2,15 +2,15 @@ package room_handlers
 
 import (
 	"github.com/gofiber/fiber/v2"
-	"github.com/smallretardedfish/go-chat/configs"
 	"github.com/smallretardedfish/go-chat/internal/domains/chat"
 	"github.com/smallretardedfish/go-chat/internal/domains/user"
+	"github.com/smallretardedfish/go-chat/logging"
 	"net/http"
 	"strconv"
 )
 
 //TODO reseach error handler
-func GetRoomHandler(log configs.Logger, service chat.RoomService) func(c *fiber.Ctx) error {
+func GetRoomHandler(log logging.Logger, service chat.RoomService) func(c *fiber.Ctx) error {
 	return func(c *fiber.Ctx) error {
 		roomIdStr := c.Params("id")
 		roomID, err := strconv.ParseInt(roomIdStr, 10, 64)

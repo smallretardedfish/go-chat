@@ -3,8 +3,8 @@ package auth_handlers
 import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt"
-	"github.com/smallretardedfish/go-chat/configs"
 	"github.com/smallretardedfish/go-chat/internal/domains/user"
+	"github.com/smallretardedfish/go-chat/logging"
 	"net/http"
 )
 
@@ -17,7 +17,7 @@ type Claims struct {
 	jwt.StandardClaims
 }
 
-func SignInHandler(log configs.Logger, authSvc user.AuthService) func(c *fiber.Ctx) error {
+func SignInHandler(log logging.Logger, authSvc user.AuthService) func(c *fiber.Ctx) error {
 	return func(c *fiber.Ctx) error {
 		authCredentials := UserCredentials{}
 		if err := c.BodyParser(&authCredentials); err != nil {

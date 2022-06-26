@@ -2,14 +2,14 @@ package room_handlers
 
 import (
 	"github.com/gofiber/fiber/v2"
-	"github.com/smallretardedfish/go-chat/configs"
 	"github.com/smallretardedfish/go-chat/internal/domains/chat"
 	"github.com/smallretardedfish/go-chat/internal/domains/user"
+	"github.com/smallretardedfish/go-chat/logging"
 	"net/http"
 	"strconv"
 )
 
-func RemoveCurrentUserFromRoomHandler(log configs.Logger, roomSvc chat.RoomService) func(c *fiber.Ctx) error {
+func RemoveCurrentUserFromRoomHandler(log logging.Logger, roomSvc chat.RoomService) func(c *fiber.Ctx) error {
 	return func(c *fiber.Ctx) error {
 		roomIdStr := c.Params("room_id")
 		roomId, err := strconv.ParseInt(roomIdStr, 10, 64)

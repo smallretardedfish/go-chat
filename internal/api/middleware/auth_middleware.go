@@ -3,8 +3,8 @@ package middleware
 import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt"
-	"github.com/smallretardedfish/go-chat/configs"
 	"github.com/smallretardedfish/go-chat/internal/domains/user"
+	"github.com/smallretardedfish/go-chat/logging"
 	"net/http"
 )
 
@@ -13,7 +13,7 @@ type Claims struct {
 	jwt.StandardClaims
 }
 
-func AuthMiddleware(log configs.Logger, userService user.UserService) func(c *fiber.Ctx) error {
+func AuthMiddleware(log logging.Logger, userService user.UserService) func(c *fiber.Ctx) error {
 	return func(c *fiber.Ctx) error {
 		var tokenString string
 		if c.Get("Token") != "" {

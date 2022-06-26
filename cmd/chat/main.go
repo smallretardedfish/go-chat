@@ -9,6 +9,7 @@ import (
 	"github.com/smallretardedfish/go-chat/internal/repositories/room_repo"
 	"github.com/smallretardedfish/go-chat/internal/repositories/user_cred_repo"
 	"github.com/smallretardedfish/go-chat/internal/repositories/user_repo"
+	"github.com/smallretardedfish/go-chat/logging"
 )
 
 func main() {
@@ -17,7 +18,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	log := configs.NewLogger()
+	log := logging.NewLogger()
 
 	db, err := configs.NewDB(cfg.DSN)
 	if err != nil {
@@ -35,6 +36,7 @@ func main() {
 	userSvc := user.NewUserServiceImpl(userRepo)
 
 	conn := connector.NewConnector(log)
+
 	httpServer := server.NewHTTPServer(log, roomSvc, userSvc, authSvc, conn)
 	if err := httpServer.Start(cfg.ServerAddress); err != nil {
 		log.Fatal(err)

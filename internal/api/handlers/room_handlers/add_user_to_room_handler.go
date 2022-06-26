@@ -2,12 +2,12 @@ package room_handlers
 
 import (
 	"github.com/gofiber/fiber/v2"
-	"github.com/smallretardedfish/go-chat/configs"
 	"github.com/smallretardedfish/go-chat/internal/domains/chat"
+	"github.com/smallretardedfish/go-chat/logging"
 	"net/http"
 )
 
-func AddUserToRoomHandler(log configs.Logger, roomSvc chat.RoomService) func(c *fiber.Ctx) error {
+func AddUserToRoomHandler(log logging.Logger, roomSvc chat.RoomService) func(c *fiber.Ctx) error {
 	return func(c *fiber.Ctx) error {
 		roomUser := &struct {
 			RoomID  int64   `json:"room_id"`

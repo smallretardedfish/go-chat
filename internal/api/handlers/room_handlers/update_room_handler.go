@@ -2,13 +2,13 @@ package room_handlers
 
 import (
 	"github.com/gofiber/fiber/v2"
-	"github.com/smallretardedfish/go-chat/configs"
 	"github.com/smallretardedfish/go-chat/internal/domains/chat"
 	"github.com/smallretardedfish/go-chat/internal/domains/user"
+	"github.com/smallretardedfish/go-chat/logging"
 	"net/http"
 )
 
-func UpdateRoomHandler(log configs.Logger, roomService chat.RoomService) func(c *fiber.Ctx) error {
+func UpdateRoomHandler(log logging.Logger, roomService chat.RoomService) func(c *fiber.Ctx) error {
 	return func(c *fiber.Ctx) error {
 		roomToUpdate := &Room{}
 

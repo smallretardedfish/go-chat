@@ -2,7 +2,7 @@ package connector
 
 import (
 	"fmt"
-	"github.com/smallretardedfish/go-chat/configs"
+	"github.com/smallretardedfish/go-chat/logging"
 	"sync"
 )
 
@@ -12,11 +12,11 @@ type Connector interface {
 
 type ConnectorImpl struct {
 	sync.RWMutex
-	log             configs.Logger
+	log             logging.Logger
 	userConnections map[int64]Connection
 }
 
-func NewConnector(log configs.Logger) *ConnectorImpl {
+func NewConnector(log logging.Logger) *ConnectorImpl {
 	return &ConnectorImpl{
 		log:             log,
 		userConnections: make(map[int64]Connection),

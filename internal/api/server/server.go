@@ -2,7 +2,6 @@ package server
 
 import (
 	"github.com/gofiber/fiber/v2"
-	"github.com/smallretardedfish/go-chat/configs"
 	"github.com/smallretardedfish/go-chat/internal/api/handlers/auth_handlers"
 	"github.com/smallretardedfish/go-chat/internal/api/handlers/room_handlers"
 	"github.com/smallretardedfish/go-chat/internal/api/handlers/user_handlers"
@@ -11,6 +10,7 @@ import (
 	"github.com/smallretardedfish/go-chat/internal/connector"
 	"github.com/smallretardedfish/go-chat/internal/domains/chat"
 	"github.com/smallretardedfish/go-chat/internal/domains/user"
+	"github.com/smallretardedfish/go-chat/logging"
 )
 
 type Server interface {
@@ -18,14 +18,14 @@ type Server interface {
 }
 
 type HTTPServer struct {
-	log         configs.Logger
+	log         logging.Logger
 	roomService chat.RoomService
 	userService user.UserService
 	authService user.AuthService
 	connector   connector.Connector
 }
 
-func NewHTTPServer(log configs.Logger, roomService chat.RoomService,
+func NewHTTPServer(log logging.Logger, roomService chat.RoomService,
 	userService user.UserService, authService user.AuthService,
 	connector connector.Connector) *HTTPServer {
 	return &HTTPServer{

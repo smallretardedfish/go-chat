@@ -2,13 +2,13 @@ package user_handlers
 
 import (
 	"github.com/gofiber/fiber/v2"
-	"github.com/smallretardedfish/go-chat/configs"
 	"github.com/smallretardedfish/go-chat/internal/domains/user"
+	"github.com/smallretardedfish/go-chat/logging"
 	"net/http"
 	"strconv"
 )
 
-func GetUserHandler(log configs.Logger, service user.UserService) func(c *fiber.Ctx) error {
+func GetUserHandler(log logging.Logger, service user.UserService) func(c *fiber.Ctx) error {
 	return func(c *fiber.Ctx) error {
 		userIdStr := c.Params("id")
 		id, err := strconv.Atoi(userIdStr)

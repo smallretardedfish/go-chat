@@ -2,13 +2,13 @@ package user_handlers
 
 import (
 	"github.com/gofiber/fiber/v2"
-	"github.com/smallretardedfish/go-chat/configs"
 	"github.com/smallretardedfish/go-chat/internal/domains/user"
+	"github.com/smallretardedfish/go-chat/logging"
 	"net/http"
 )
 
 //TODO reseach error handler
-func DeleteUserHandler(log configs.Logger, service user.UserService) func(c *fiber.Ctx) error {
+func DeleteUserHandler(log logging.Logger, service user.UserService) func(c *fiber.Ctx) error {
 	return func(c *fiber.Ctx) error {
 		currentUser := c.Context().UserValue("user").(*user.User)
 

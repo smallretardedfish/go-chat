@@ -2,12 +2,12 @@ package user_handlers
 
 import (
 	"github.com/gofiber/fiber/v2"
-	"github.com/smallretardedfish/go-chat/configs"
 	"github.com/smallretardedfish/go-chat/internal/domains/user"
+	"github.com/smallretardedfish/go-chat/logging"
 	"net/http"
 )
 
-func UpdateUserHandler(log configs.Logger, userService user.UserService) func(c *fiber.Ctx) error {
+func UpdateUserHandler(log logging.Logger, userService user.UserService) func(c *fiber.Ctx) error {
 	return func(c *fiber.Ctx) error {
 		userData := User{}
 		if err := c.BodyParser(&userData); err != nil {

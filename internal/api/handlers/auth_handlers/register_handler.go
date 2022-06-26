@@ -2,12 +2,12 @@ package auth_handlers
 
 import (
 	"github.com/gofiber/fiber/v2"
-	"github.com/smallretardedfish/go-chat/configs"
 	"github.com/smallretardedfish/go-chat/internal/domains/user"
+	"github.com/smallretardedfish/go-chat/logging"
 	"net/http"
 )
 
-func RegisterHandler(log configs.Logger, authSvc user.AuthService) func(c *fiber.Ctx) error {
+func RegisterHandler(log logging.Logger, authSvc user.AuthService) func(c *fiber.Ctx) error {
 	return func(c *fiber.Ctx) error {
 		userInp := &SignUpInput{}
 		err := c.BodyParser(userInp)
