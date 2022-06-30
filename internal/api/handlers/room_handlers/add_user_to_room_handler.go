@@ -13,11 +13,11 @@ func AddUserToRoomHandler(log logging.Logger, roomSvc chat.RoomService) func(c *
 			RoomID  int64   `json:"room_id"`
 			UserIDs []int64 `json:"user_id"`
 		}{}
-
 		if err := c.BodyParser(roomUser); err != nil {
 			c.Status(http.StatusInternalServerError)
 			return err
 		}
+		log.Info(roomUser)
 		if _, err := roomSvc.AddUsersToRoom(roomUser.UserIDs, roomUser.RoomID); err != nil {
 			c.Status(http.StatusInternalServerError)
 			return err

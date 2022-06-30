@@ -6,12 +6,14 @@ import (
 )
 
 type MessageService interface {
-	GetMessages(limit, offset, userID, chatID int64) ([]Message, error) // get certain messages in room
+	GetMessages(limit, offset *int64, userID, chatID int64) ([]Message, error) // get certain messages in room
 	CreateMessage(message Message) (*Message, error)
-	UpdateMessage(message Message) (*Message, error)     // change content of message
-	DeleteMessage(userID, messageID int64) (bool, error) // totally delete
-	DeleteMyMessage(messageID int64) (bool, error)       // just update deleted_user list
+	UpdateMessage(message Message) (*Message, error)                   // change content of message
+	DeleteCurrentUserMessage(initiator, messageID int64) (bool, error) // totally delete
+	DeleteMessageForUser(userID, messageID int64) (bool, error)        // just update deleted_user list (user deletes  for themself only)
 }
+
+var _ MessageService = &MessageServiceImpl{}
 
 type MessageServiceImpl struct {
 	messageRepo message_repo.MessageRepo
@@ -40,7 +42,7 @@ func (m *MessageServiceImpl) CreateMessage(message Message) (*Message, error) {
 	return &res, nil
 }
 
-func (m *MessageServiceImpl) UpdateMessage(message Message) (*Message, error) { //TODO fix deleted_users loss after mapping
+func (m *MessageServiceImpl) UpdateMessage(message Message) (*Message, error) {
 	repoMsg := messageToRepoMessage(message)
 	msg, err := m.messageRepo.UpdateMessage(repoMsg)
 	if err != nil {
@@ -58,8 +60,8 @@ func (m *MessageServiceImpl) DeleteMessageForUser(userID, messageID int64) (bool
 	return ok, nil
 }
 
-func (m *MessageServiceImpl) DeleteMessage(messageID int64) (bool, error) {
-	ok, err := m.messageRepo.DeleteMessage(messageID)
+func (m *MessageServiceImpl) DeleteCurrentUserMessage(initiator, messageID int64) (bool, error) {
+	ok, err := m.messageRepo.DeleteMessage(initiator, messageID)
 	if err != nil {
 		return false, err
 	}

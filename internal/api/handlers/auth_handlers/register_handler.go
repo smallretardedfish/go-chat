@@ -7,7 +7,7 @@ import (
 	"net/http"
 )
 
-func RegisterHandler(log logging.Logger, authSvc user.AuthService) func(c *fiber.Ctx) error {
+func RegisterHandler(log logging.Logger, jwtKey string, authSvc user.AuthService) func(c *fiber.Ctx) error {
 	return func(c *fiber.Ctx) error {
 		userInp := &SignUpInput{}
 		err := c.BodyParser(userInp)
@@ -35,7 +35,7 @@ func RegisterHandler(log logging.Logger, authSvc user.AuthService) func(c *fiber
 			c.Status(http.StatusUnauthorized)
 			return nil
 		}
-		token, err := CreateToken(signedUser.ID)
+		token, err := CreateToken(signedUser.ID, jwtKey)
 		if err != nil {
 			c.Status(http.StatusInternalServerError)
 			return err

@@ -20,6 +20,7 @@ func userToDomainUser(usr User) user.User {
 
 func domainUserToUser(usr user.User) User {
 	return User{
+		ID:    usr.ID,
 		Name:  usr.Name,
 		Email: usr.Email,
 	}

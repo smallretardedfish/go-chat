@@ -10,7 +10,6 @@ import (
 	"strconv"
 )
 
-//TODO reseach error handler
 func GetRoomsHandler(log logging.Logger, service chat.RoomService) func(c *fiber.Ctx) error {
 	return func(c *fiber.Ctx) error {
 		limitStr := c.Query("limit", "10")

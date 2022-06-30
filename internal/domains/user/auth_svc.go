@@ -59,6 +59,22 @@ func (a *AuthServiceImpl) SignUp(user User, credentials UserCredentials) (*User,
 }
 
 func (a *AuthServiceImpl) UpdatePassword(userID int64, oldPassword, newPassword string) (bool, error) {
-	//TODO implement method
-	panic("implement me")
+
+	usr, err := a.userRepo.GetUserByID(userID)
+	if err != nil || usr == nil {
+		return false, err
+	}
+	credentials, err := a.userCredRepo.GetUserCredentials(usr.Email)
+	if err != nil {
+		return false, err
+	}
+	if err := bcrypt.CompareHashAndPassword([]byte(credentials.Password), []byte(oldPassword)); err != nil {
+		return false, nil
+	}
+	credentials.Password = newPassword
+
+	if _, err := a.userCredRepo.UpdateUserCredentials(*credentials); err != nil {
+		return false, err
+	}
+	return true, nil
 }

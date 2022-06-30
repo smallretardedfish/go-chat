@@ -9,7 +9,6 @@ import (
 	"strconv"
 )
 
-//TODO reseach error handler
 func GetRoomHandler(log logging.Logger, service chat.RoomService) func(c *fiber.Ctx) error {
 	return func(c *fiber.Ctx) error {
 		roomIdStr := c.Params("id")

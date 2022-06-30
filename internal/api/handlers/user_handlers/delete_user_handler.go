@@ -7,12 +7,11 @@ import (
 	"net/http"
 )
 
-//TODO reseach error handler
 func DeleteUserHandler(log logging.Logger, service user.UserService) func(c *fiber.Ctx) error {
 	return func(c *fiber.Ctx) error {
 		currentUser := c.Context().UserValue("user").(*user.User)
-
-		_, err := service.DeleteUser(currentUser.ID) //TODO how to use this boolean
+		//TODO how to use this boolean
+		_, err := service.DeleteUser(currentUser.ID)
 		if err != nil {
 			c.Status(http.StatusInternalServerError)
 			return err

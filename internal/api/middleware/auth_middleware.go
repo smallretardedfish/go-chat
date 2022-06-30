@@ -13,7 +13,7 @@ type Claims struct {
 	jwt.StandardClaims
 }
 
-func AuthMiddleware(log logging.Logger, userService user.UserService) func(c *fiber.Ctx) error {
+func AuthMiddleware(log logging.Logger, jwtKey string, userService user.UserService) func(c *fiber.Ctx) error {
 	return func(c *fiber.Ctx) error {
 		var tokenString string
 		if c.Get("Token") != "" {
@@ -29,17 +29,17 @@ func AuthMiddleware(log logging.Logger, userService user.UserService) func(c *fi
 		}
 
 		token, err := jwt.ParseWithClaims(tokenString, &Claims{}, func(token *jwt.Token) (interface{}, error) {
-			return []byte("jwt-secret"), nil // TODO maybe retrieve secret from config
+			return []byte(jwtKey), nil
 		})
 		if err != nil {
 			c.Status(http.StatusUnauthorized)
 			return c.Send(nil)
 		}
-		log.Info("PARSING TOKEN")
+		log.Debug("PARSING TOKEN")
 		if claims, ok := token.Claims.(*Claims); ok && token.Valid {
 			id := claims.UserID
 			usr, err := userService.GetUser(id)
-			log.Info("User got from token: ", usr)
+			log.Debug("User got from token: ", usr)
 			if err != nil {
 				c.Status(http.StatusInternalServerError)
 				return err

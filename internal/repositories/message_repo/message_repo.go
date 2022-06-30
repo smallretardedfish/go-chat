@@ -10,7 +10,7 @@ type MessageRepo interface {
 	GetMessage(messageID int64) (*Message, error)
 	GetMessages(messageFilter *MessageFilter, userID, roomID int64) ([]Message, error)
 	UpdateMessage(message Message) (*Message, error)
-	DeleteMessage(messageID int64) (bool, error)
+	DeleteMessage(initiatorID, messageID int64) (bool, error)
 	DeleteMessageForUser(messageID, userID int64) (bool, error)
 }
 
@@ -19,10 +19,10 @@ type MessageRepoPG struct {
 }
 
 func (m *MessageRepoPG) CreateMessage(msg Message) (*Message, error) {
-	err := m.db.Model(Message{}).Create(&msg).Error
+	err := m.db.Model(Message{}).Create(&msg).Error //TODO create message in room only
 	if err != nil {
 		return nil, err
-	}
+	} // if user is a member of this room
 	return &msg, nil
 }
 
@@ -35,7 +35,6 @@ func (m *MessageRepoPG) GetMessage(messageID int64) (*Message, error) {
 	return &message, nil
 }
 
-//TODO check where clause
 func (m *MessageRepoPG) GetMessages(messageFilter *MessageFilter, userID, roomID int64) ([]Message, error) {
 	var messages []Message
 	res := m.db.Preload("Owner").Where("room_id = ? AND ? != ALL(deleted_users) ", roomID, userID)
@@ -65,8 +64,8 @@ func (m *MessageRepoPG) UpdateMessage(message Message) (*Message, error) {
 	return &message, nil
 }
 
-func (m *MessageRepoPG) DeleteMessage(messageID int64) (bool, error) {
-	res := m.db.Delete(Message{}, messageID)
+func (m *MessageRepoPG) DeleteMessage(initiatorID, messageID int64) (bool, error) {
+	res := m.db.Where("id = ? AND owner_id", messageID, initiatorID).Delete(Message{})
 	err := res.Error
 	if err != nil {
 		return false, err
@@ -78,7 +77,8 @@ func (m *MessageRepoPG) DeleteMessage(messageID int64) (bool, error) {
 }
 
 func (m *MessageRepoPG) DeleteMessageForUser(messageID, userID int64) (bool, error) {
-	res := m.db.Exec("UPDATE messages SET deleted_users = array_append(deleted_users,?) WHERE id = ?", userID, messageID)
+	res := m.db.Exec("UPDATE messages SET deleted_users = array_append(deleted_users,?) WHERE id = ?", userID,
+		messageID)
 	err := res.Error
 	if err != nil {
 		return false, err

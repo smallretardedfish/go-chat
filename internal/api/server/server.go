@@ -23,17 +23,19 @@ type HTTPServer struct {
 	userService user.UserService
 	authService user.AuthService
 	connector   connector.Connector
+	jwtKey      string
 }
 
 func NewHTTPServer(log logging.Logger, roomService chat.RoomService,
 	userService user.UserService, authService user.AuthService,
-	connector connector.Connector) *HTTPServer {
+	connector connector.Connector, jwtKey string) *HTTPServer {
 	return &HTTPServer{
 		log:         log,
 		roomService: roomService,
 		userService: userService,
 		authService: authService,
 		connector:   connector,
+		jwtKey:      jwtKey,
 	}
 }
 
@@ -41,18 +43,16 @@ func (s *HTTPServer) Start(serverAddress string) error {
 	app := fiber.New()
 
 	publicGroup := app.Group("/api/v1")
-	publicGroup.Post("/sign-up", auth_handlers.RegisterHandler(s.log, s.authService))
-	publicGroup.Post("/sign-in", auth_handlers.SignInHandler(s.log, s.authService))
+	publicGroup.Post("/sign-up", auth_handlers.RegisterHandler(s.log, s.jwtKey, s.authService))
+	publicGroup.Post("/sign-in", auth_handlers.SignInHandler(s.log, s.jwtKey, s.authService))
 
-	privateGroup := app.Group("/api/v1", middleware.AuthMiddleware(s.log, s.userService))
+	privateGroup := app.Group("/api/v1", middleware.AuthMiddleware(s.log, s.jwtKey, s.userService))
 	privateGroup.Get("/rooms", room_handlers.GetRoomsHandler(s.log, s.roomService))
 	privateGroup.Get("/rooms/:id", room_handlers.GetRoomHandler(s.log, s.roomService))
 	privateGroup.Post("/rooms", room_handlers.CreateRoomHandler(s.log, s.roomService))
 	privateGroup.Post("rooms/add", room_handlers.AddUserToRoomHandler(s.log, s.roomService))
 	privateGroup.Delete("rooms/:room_id/remove/:user_id",
-		room_handlers.RemoveCurrentUserFromRoomHandler(
-			s.log,
-			s.roomService))
+		room_handlers.RemoveCurrentUserFromRoomHandler(s.log, s.roomService))
 
 	privateGroup.Post("rooms/remove", room_handlers.RemoveUsersFromRoomHandler(s.log, s.roomService))
 	privateGroup.Put("/rooms/:id", room_handlers.UpdateRoomHandler(s.log, s.roomService))
@@ -63,7 +63,8 @@ func (s *HTTPServer) Start(serverAddress string) error {
 	privateGroup.Patch("/users", user_handlers.UpdateUserHandler(s.log, s.userService))
 	privateGroup.Delete("users/:id", user_handlers.DeleteUserHandler(s.log, s.userService))
 
-	app.All("/ws", middleware.AuthMiddleware(s.log, s.userService), middleware.WsMiddleware, ws_handler.WsHandler(s.log, s.connector))
+	app.All("/ws", middleware.AuthMiddleware(s.log, s.jwtKey, s.userService), middleware.WsMiddleware,
+		ws_handler.WsHandler(s.log, s.connector))
 
 	return app.Listen(serverAddress)
 }

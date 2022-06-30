@@ -1,12 +1,13 @@
 package connector
 
 import (
-	"github.com/gofiber/websocket/v2"
+	"github.com/fasthttp/websocket"
 )
 
 type Connection interface {
 	Connect()
 	GetMessageChannel() chan []byte
+	GetDisconnectClientCh() chan struct{}
 	SendMessage(data any) error
 	Close() error
 	GetUser() *User
@@ -15,20 +16,22 @@ type Connection interface {
 }
 
 type WsConnection struct {
-	conn          *websocket.Conn
-	user          *User
-	currentRoomId int64
-	isConnected   bool
-	messageCh     chan []byte
-	closeCh       chan struct{}
+	conn               *websocket.Conn
+	user               *User
+	currentRoomId      int64
+	isConnected        bool
+	messageCh          chan []byte
+	closeCh            chan struct{}
+	disconnectClientCh chan struct{}
 }
 
 func NewWsConnection(conn *websocket.Conn, user *User) *WsConnection {
 	return &WsConnection{
-		conn:      conn,
-		user:      user,
-		messageCh: make(chan []byte),
-		closeCh:   make(chan struct{}),
+		conn:               conn,
+		user:               user,
+		messageCh:          make(chan []byte),
+		closeCh:            make(chan struct{}),
+		disconnectClientCh: make(chan struct{}),
 	}
 }
 
@@ -42,15 +45,20 @@ func (c *WsConnection) read() {
 			_, messageData, err := c.conn.ReadMessage()
 			if err != nil {
 				c.isConnected = false
+				c.disconnectClientCh <- struct{}{}
 				return
 			}
 			c.messageCh <- messageData
 		}
 	}
-
 }
+
+func (c *WsConnection) GetDisconnectClientCh() chan struct{} {
+	return c.disconnectClientCh
+}
+
 func (c *WsConnection) Connect() {
-	go c.read()
+	c.read()
 }
 
 func (c *WsConnection) GetMessageChannel() chan []byte {
@@ -63,6 +71,7 @@ func (c *WsConnection) SendMessage(data any) error {
 
 func (c *WsConnection) Close() error {
 	c.closeCh <- struct{}{}
+	c.disconnectClientCh <- struct{}{}
 	return c.conn.Close()
 }
 

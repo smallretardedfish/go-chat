@@ -3,6 +3,10 @@
 <head>
     <title>Chat Example</title>
     <script type="text/javascript">
+        //another token
+        const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjo2LCJleHAiOjE2NTc4ODYzNzJ9.-BwKB7WGfrwfX5OTj1_9lk5Mr943r9IeMNJZp8_LBvg"
+        const host =  `ws://localhost:8080/ws?token=${token}`
+        console.log(host)
         window.onload = function () {
             var conn;
             var msg = document.getElementById("msg");
@@ -23,25 +27,27 @@
                 if (!msg.value) {
                     return false;
                 }
-                conn.send(msg.value);
+                conn.send(JSON.stringify({type: 3, data: {text: msg.value}}));
                 msg.value = "";
                 return false;
             };
 
             if (window["WebSocket"]) {
-                conn = new WebSocket("ws://" + document.location.host + "/ws");
+                conn = new WebSocket(host);
+                conn.onopen = function (){
+                    console.log("connected");
+                    conn.send(JSON.stringify({type: 1, data: {room_id: 1}}));
+                };
                 conn.onclose = function (evt) {
                     var item = document.createElement("div");
                     item.innerHTML = "<b>Connection closed.</b>";
                     appendLog(item);
                 };
                 conn.onmessage = function (evt) {
-                    var messages = evt.data.split('\n');
-                    for (var i = 0; i < messages.length; i++) {
-                        var item = document.createElement("div");
-                        item.innerText = messages[i];
-                        appendLog(item);
-                    }
+                    const data = JSON.parse(evt.data)
+                    var item = document.createElement("div")
+                    item.innerText = data.message;
+                    appendLog(item);
                 };
             } else {
                 var item = document.createElement("div");
