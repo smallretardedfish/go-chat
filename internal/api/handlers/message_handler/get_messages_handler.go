@@ -1,4 +1,4 @@
-package room_handlers
+package message_handler
 
 import (
 	"github.com/gofiber/fiber/v2"
@@ -10,25 +10,34 @@ import (
 	"strconv"
 )
 
-func GetRoomsHandler(log logging.Logger, service chat.RoomService) func(c *fiber.Ctx) error {
+func GetMessagesHandler(log logging.Logger, service chat.MessageService) func(c *fiber.Ctx) error {
 	return func(c *fiber.Ctx) error {
 		limitStr := c.Query("limit", "10")
 		offsetStr := c.Query("offset", "0")
+		roomIdStr := c.Params("room_id")
 		limit, err := strconv.ParseInt(limitStr, 10, 64)
+		if err != nil {
+			c.Status(http.StatusBadRequest)
+			return err
+		}
 		offset, err := strconv.ParseInt(offsetStr, 10, 64)
 		if err != nil {
-			c.Status(http.StatusInternalServerError)
+			c.Status(http.StatusBadRequest)
+			return err
+		}
+		roomID, err := strconv.ParseInt(roomIdStr, 10, 64)
+		if err != nil {
+			c.Status(http.StatusBadRequest)
 			return err
 		}
 		usr := c.Context().UserValue("user").(*user.User)
-
-		domainRooms, err := service.GetRooms(int64(limit), int64(offset), usr.ID)
-		rooms := slice.Map(domainRooms, domainRoomToRoom)
+		domainMessages, err := service.GetMessages(usr.ID, roomID, &limit, &offset)
 		if err != nil {
 			c.Status(http.StatusInternalServerError)
 			return err
 		}
-		c.Status(http.StatusOK)
-		return c.JSON(rooms)
+		messages := slice.Map(domainMessages, chatMessageToMessage)
+
+		return c.JSON(messages)
 	}
 }

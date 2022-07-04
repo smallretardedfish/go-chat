@@ -2,9 +2,10 @@ package user_handlers
 
 import (
 	"github.com/gofiber/fiber/v2"
+	"github.com/smallretardedfish/go-chat/internal/api/handlers/common"
 	"github.com/smallretardedfish/go-chat/internal/domains/user"
 	"github.com/smallretardedfish/go-chat/logging"
-	"github.com/smallretardedfish/go-chat/tools/slice"
+	"github.com/smallretardedfish/go-chat/pkg/slice"
 	"net/http"
 )
 
@@ -21,7 +22,7 @@ func GetUsersHandler(log logging.Logger, service user.UserService) func(c *fiber
 			c.Status(http.StatusInternalServerError)
 			return err
 		}
-		users := slice.Map(domainUsers, domainUserToUser)
+		users := slice.Map(domainUsers, common.DomainUserToUser)
 
 		if err != nil {
 			c.Status(http.StatusInternalServerError)

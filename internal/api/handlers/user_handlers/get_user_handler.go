@@ -2,6 +2,7 @@ package user_handlers
 
 import (
 	"github.com/gofiber/fiber/v2"
+	"github.com/smallretardedfish/go-chat/internal/api/handlers/common"
 	"github.com/smallretardedfish/go-chat/internal/domains/user"
 	"github.com/smallretardedfish/go-chat/logging"
 	"net/http"
@@ -26,7 +27,7 @@ func GetUserHandler(log logging.Logger, service user.UserService) func(c *fiber.
 			log.Warn("No such user present in repo")
 			return c.JSON(nil) // probably that way
 		}
-		usr := domainUserToUser(*domainUser)
+		usr := common.DomainUserToUser(*domainUser)
 		if err != nil {
 			c.Status(http.StatusInternalServerError)
 			return err

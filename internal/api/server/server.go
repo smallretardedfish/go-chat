@@ -2,7 +2,9 @@ package server
 
 import (
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/smallretardedfish/go-chat/internal/api/handlers/auth_handlers"
+	"github.com/smallretardedfish/go-chat/internal/api/handlers/message_handler"
 	"github.com/smallretardedfish/go-chat/internal/api/handlers/room_handlers"
 	"github.com/smallretardedfish/go-chat/internal/api/handlers/user_handlers"
 	"github.com/smallretardedfish/go-chat/internal/api/handlers/ws_handler"
@@ -23,11 +25,13 @@ type HTTPServer struct {
 	userService user.UserService
 	authService user.AuthService
 	connector   connector.Connector
+	messageSvc  chat.MessageService
 	jwtKey      string
 }
 
 func NewHTTPServer(log logging.Logger, roomService chat.RoomService,
 	userService user.UserService, authService user.AuthService,
+	messageSvc chat.MessageService,
 	connector connector.Connector, jwtKey string) *HTTPServer {
 	return &HTTPServer{
 		log:         log,
@@ -35,12 +39,14 @@ func NewHTTPServer(log logging.Logger, roomService chat.RoomService,
 		userService: userService,
 		authService: authService,
 		connector:   connector,
+		messageSvc:  messageSvc,
 		jwtKey:      jwtKey,
 	}
 }
 
 func (s *HTTPServer) Start(serverAddress string) error {
 	app := fiber.New()
+	app.Use(cors.New())
 
 	publicGroup := app.Group("/api/v1")
 	publicGroup.Post("/sign-up", auth_handlers.RegisterHandler(s.log, s.jwtKey, s.authService))
@@ -54,6 +60,7 @@ func (s *HTTPServer) Start(serverAddress string) error {
 	privateGroup.Delete("rooms/:room_id/remove/:user_id",
 		room_handlers.RemoveCurrentUserFromRoomHandler(s.log, s.roomService))
 
+	privateGroup.Get("/rooms/:room_id/messages", message_handler.GetMessagesHandler(s.log, s.messageSvc))
 	privateGroup.Post("rooms/remove", room_handlers.RemoveUsersFromRoomHandler(s.log, s.roomService))
 	privateGroup.Put("/rooms/:id", room_handlers.UpdateRoomHandler(s.log, s.roomService))
 	privateGroup.Delete("/rooms/:id", room_handlers.DeleteRoomHandler(s.log, s.roomService))

@@ -3,7 +3,6 @@ package user
 import (
 	"github.com/smallretardedfish/go-chat/internal/repositories/user_cred_repo"
 	"github.com/smallretardedfish/go-chat/internal/repositories/user_repo"
-	"golang.org/x/crypto/bcrypt"
 )
 
 type AuthService interface {
@@ -12,13 +11,31 @@ type AuthService interface {
 	UpdatePassword(userID int64, oldPassword, newPassword string) (bool, error)
 }
 
-type AuthServiceImpl struct {
-	userCredRepo user_cred_repo.UserCredentialsRepo
-	userRepo     user_repo.UserRepo
+type UserRepo interface {
+	GetUserByID(userID int64) (*user_repo.User, error)
+	GetUserByEmail(email string) (*user_repo.User, error)
+	CreateUser(user user_repo.User) (*user_repo.User, error)
 }
 
-func NewAuthServiceImpl(userCredRepo user_cred_repo.UserCredentialsRepo, userRepo user_repo.UserRepo) *AuthServiceImpl {
-	return &AuthServiceImpl{userCredRepo: userCredRepo, userRepo: userRepo}
+type UserCredentialsRepo interface {
+	CreateUserCredentials(credentials user_cred_repo.UserCredentials) (*user_cred_repo.UserCredentials, error)
+	GetUserCredentials(email string) (*user_cred_repo.UserCredentials, error)
+	UpdateUserCredentials(credentials user_cred_repo.UserCredentials) (*user_cred_repo.UserCredentials, error)
+}
+
+type AuthServiceImpl struct {
+	userCredRepo UserCredentialsRepo
+	userRepo     UserRepo
+	crypto       Crypto
+}
+
+type Crypto interface {
+	HashAndSalt(password []byte) (string, error)
+	ComparePasswords(hashedPassword string, password []byte) error
+}
+
+func NewAuthServiceImpl(userCredRepo UserCredentialsRepo, userRepo UserRepo, crypto Crypto) *AuthServiceImpl {
+	return &AuthServiceImpl{userCredRepo: userCredRepo, userRepo: userRepo, crypto: crypto}
 }
 
 func (a *AuthServiceImpl) SingIn(email, password string) (*User, error) {
@@ -26,7 +43,7 @@ func (a *AuthServiceImpl) SingIn(email, password string) (*User, error) {
 	if err != nil || credentials == nil {
 		return nil, err
 	}
-	if err := bcrypt.CompareHashAndPassword([]byte(credentials.Password), []byte(password)); err != nil {
+	if err := a.crypto.ComparePasswords(credentials.Password, []byte(password)); err != nil {
 		return nil, nil
 	}
 	repoUser, err := a.userRepo.GetUserByEmail(email)
@@ -39,13 +56,13 @@ func (a *AuthServiceImpl) SingIn(email, password string) (*User, error) {
 }
 
 func (a *AuthServiceImpl) SignUp(user User, credentials UserCredentials) (*User, error) {
-	domainUser := userToRepoUser(user)
-	createdUser, err := a.userRepo.CreateUser(domainUser)
+	repoUser := userToRepoUser(user)
+	createdUser, err := a.userRepo.CreateUser(repoUser)
 	if err != nil || createdUser == nil {
 		return nil, err
 	}
 	repoCreds := domainCredentialsToRepoCredentials(credentials)
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(repoCreds.Password), bcrypt.DefaultCost)
+	hashedPassword, err := a.crypto.HashAndSalt([]byte(repoCreds.Password))
 	if err != nil {
 		return nil, err
 	}
@@ -68,7 +85,7 @@ func (a *AuthServiceImpl) UpdatePassword(userID int64, oldPassword, newPassword 
 	if err != nil {
 		return false, err
 	}
-	if err := bcrypt.CompareHashAndPassword([]byte(credentials.Password), []byte(oldPassword)); err != nil {
+	if err := a.crypto.ComparePasswords(credentials.Password, []byte(oldPassword)); err != nil {
 		return false, nil
 	}
 	credentials.Password = newPassword

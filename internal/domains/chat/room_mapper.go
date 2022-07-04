@@ -3,7 +3,7 @@ package chat
 import (
 	"github.com/smallretardedfish/go-chat/internal/repositories/room_repo"
 	"github.com/smallretardedfish/go-chat/internal/repositories/user_repo"
-	"github.com/smallretardedfish/go-chat/tools/slice"
+	"github.com/smallretardedfish/go-chat/pkg/slice"
 )
 
 func repoUserToUser(repoUser user_repo.User) User {

@@ -12,14 +12,14 @@ import (
 func DeleteRoomHandler(log logging.Logger, service chat.RoomService) func(c *fiber.Ctx) error {
 	return func(c *fiber.Ctx) error {
 		roomIdStr := c.Params("id")
-		roomID, err := strconv.Atoi(roomIdStr)
+		roomID, err := strconv.ParseInt(roomIdStr, 10, 64)
 		if err != nil {
 			c.Status(http.StatusBadRequest)
 			return err
 		}
 		usr := c.Context().UserValue("user").(*user.User)
 
-		ok, err := service.DeleteRoom(usr.ID, int64(roomID))
+		ok, err := service.DeleteRoom(usr.ID, roomID)
 		if err != nil {
 			log.Error(err)
 			c.Status(http.StatusInternalServerError)

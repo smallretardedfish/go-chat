@@ -3,14 +3,29 @@
 <head>
     <title>Chat Example</title>
     <script type="text/javascript">
-        //another token
-        const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjo2LCJleHAiOjE2NTc4ODYzNzJ9.-BwKB7WGfrwfX5OTj1_9lk5Mr943r9IeMNJZp8_LBvg"
-        const host =  `ws://localhost:8080/ws?token=${token}`
-        console.log(host)
+        const CONNECT_TO_ROOM_MESSAGE_TYPE = 1;
+        const NEW_MESSAGE_MESSAGE_TYPE = 3;
+        const roomID = 1;
+
+        const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjo2LCJleHAiOjE2NTc4ODYzNzJ9.-BwKB7WGfrwfX5OTj1_9lk5Mr943r9IeMNJZp8_LBvg";
+        const wsHost =  `ws://localhost:8080/ws?token=${token}`;
+        const apiURl =  `http://localhost:8080`;
+
         window.onload = function () {
             var conn;
             var msg = document.getElementById("msg");
             var log = document.getElementById("log");
+
+            async function getMessages(roomID){
+                const url = `${apiURl}/api/v1/rooms/${roomID}/messages?limit=10&offset=0`;
+                const response =  await fetch(url,{headers:{'Token':token}});
+                const data = await response.json()
+
+                for (let i = data.length - 1; i >= 0; i--)  {
+                        newMessage(data[i]);
+                }
+
+            }
 
             function appendLog(item) {
                 var doScroll = log.scrollTop > log.scrollHeight - log.clientHeight - 1;
@@ -19,7 +34,15 @@
                     log.scrollTop = log.scrollHeight - log.clientHeight;
                 }
             }
-
+            function connectToRoom(roomID){
+                conn.send(JSON.stringify({type: CONNECT_TO_ROOM_MESSAGE_TYPE, data: {room_id: roomID}}));
+                getMessages(roomID);
+            }
+            function newMessage(msg){
+                const item = document.createElement("div");
+                item.innerText = msg.text;
+                appendLog(item);
+            }
             document.getElementById("form").onsubmit = function () {
                 if (!conn) {
                     return false;
@@ -27,27 +50,30 @@
                 if (!msg.value) {
                     return false;
                 }
-                conn.send(JSON.stringify({type: 3, data: {text: msg.value}}));
+                conn.send(JSON.stringify({type: NEW_MESSAGE_MESSAGE_TYPE, data: {text: msg.value}}));
                 msg.value = "";
                 return false;
             };
 
             if (window["WebSocket"]) {
-                conn = new WebSocket(host);
+                conn = new WebSocket(wsHost);
                 conn.onopen = function (){
                     console.log("connected");
-                    conn.send(JSON.stringify({type: 1, data: {room_id: 1}}));
+                    connectToRoom(roomID);
                 };
                 conn.onclose = function (evt) {
                     var item = document.createElement("div");
                     item.innerHTML = "<b>Connection closed.</b>";
                     appendLog(item);
                 };
+
                 conn.onmessage = function (evt) {
-                    const data = JSON.parse(evt.data)
-                    var item = document.createElement("div")
-                    item.innerText = data.message;
-                    appendLog(item);
+                    const data = JSON.parse(evt.data);
+                    switch (data.type) {
+                        case NEW_MESSAGE_MESSAGE_TYPE:
+                            newMessage(data.data);
+                            break;
+                    }
                 };
             } else {
                 var item = document.createElement("div");

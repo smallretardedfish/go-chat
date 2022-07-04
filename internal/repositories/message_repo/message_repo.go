@@ -19,7 +19,8 @@ type MessageRepoPG struct {
 }
 
 func (m *MessageRepoPG) CreateMessage(msg Message) (*Message, error) {
-	err := m.db.Model(Message{}).Create(&msg).Error //TODO create message in room only
+	err := m.db.Model(Message{}).Where("? IN (SELECT user_id FROM room_users WHERE room_id = ?)", msg.OwnerID, msg.RoomID).
+		Create(&msg).Error
 	if err != nil {
 		return nil, err
 	} // if user is a member of this room
@@ -49,7 +50,7 @@ func (m *MessageRepoPG) GetMessages(messageFilter *MessageFilter, userID, roomID
 			res = res.Limit(int(*messageFilter.Limit))
 		}
 	}
-	err := res.Find(&messages).Error
+	err := res.Order("id DESC").Find(&messages).Error
 	if err != nil {
 		return nil, err
 	}

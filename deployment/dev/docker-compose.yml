@@ -1,0 +1,37 @@
+version: '3.8'
+services:
+  chat:
+    build:
+      context: ../../
+    container_name: chat
+    ports:
+      - '8080:8080'
+    volumes:
+      - ../wait-for-it.sh:/wait-for-it.sh
+  chat-db:
+    image: postgres:11
+    container_name: chat-database
+    ports:
+      - '5432:5432'
+    restart: always
+    volumes:
+      - ./tmp/chat-db/data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: mysecretpassword
+      POSTGRES_DB: chatdb
+  chat-migrations:
+    image: migrate/migrate
+    container_name: chat-migrations
+    restart: on-failure
+    depends_on:
+      - chat-db
+    volumes:
+      - ../wait-for-it.sh:/wait-for-it.sh
+      - ../../migrations:/migrations
+    entrypoint: [ ]
+    command: /wait-for-it.sh chat-db:5432 -- migrate -path=/migrations/ -database 
+            \ postgres://postgres:mysecretpassword@chat-db:5432/chatdb?sslmode=disable up
+networks:
+  chat:
+    driver: bridge

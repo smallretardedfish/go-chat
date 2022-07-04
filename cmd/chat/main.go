@@ -11,6 +11,7 @@ import (
 	"github.com/smallretardedfish/go-chat/internal/repositories/user_cred_repo"
 	"github.com/smallretardedfish/go-chat/internal/repositories/user_repo"
 	"github.com/smallretardedfish/go-chat/logging"
+	"github.com/smallretardedfish/go-chat/pkg/crypto"
 )
 
 func main() {
@@ -33,12 +34,12 @@ func main() {
 
 	messageSvc := chat.NewMessageServiceImpl(messageRepo)
 	roomSvc := chat.NewRoomServiceImpl(roomRepo)
-	authSvc := user.NewAuthServiceImpl(credsRepo, userRepo)
+	authSvc := user.NewAuthServiceImpl(credsRepo, userRepo, &crypto.AppCrypto{})
 	userSvc := user.NewUserServiceImpl(userRepo)
 
 	conn := connector.NewConnector(log, messageSvc)
 
-	httpServer := server.NewHTTPServer(log, roomSvc, userSvc, authSvc, conn, cfg.JwtKey)
+	httpServer := server.NewHTTPServer(log, roomSvc, userSvc, authSvc, messageSvc, conn, cfg.JwtKey)
 	if err := httpServer.Start(cfg.ServerAddress); err != nil {
 		log.Fatal(err)
 	}

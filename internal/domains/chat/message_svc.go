@@ -2,24 +2,22 @@ package chat
 
 import (
 	"github.com/smallretardedfish/go-chat/internal/repositories/message_repo"
-	"github.com/smallretardedfish/go-chat/tools/slice"
+	"github.com/smallretardedfish/go-chat/pkg/slice"
 )
 
 type MessageService interface {
-	GetMessages(limit, offset *int64, userID, chatID int64) ([]Message, error) // get certain messages in room
+	GetMessages(userID, roomID int64, limit, offset *int64) ([]Message, error) // get certain messages in room
 	CreateMessage(message Message) (*Message, error)
 	UpdateMessage(message Message) (*Message, error)                   // change content of message
 	DeleteCurrentUserMessage(initiator, messageID int64) (bool, error) // totally delete
 	DeleteMessageForUser(userID, messageID int64) (bool, error)        // just update deleted_user list (user deletes  for themself only)
 }
 
-var _ MessageService = &MessageServiceImpl{}
-
 type MessageServiceImpl struct {
 	messageRepo message_repo.MessageRepo
 }
 
-func (m *MessageServiceImpl) GetMessages(limit, offset *int64, userID, roomID int64) ([]Message, error) {
+func (m *MessageServiceImpl) GetMessages(userID, roomID int64, limit, offset *int64) ([]Message, error) {
 
 	messages, err := m.messageRepo.GetMessages(&message_repo.MessageFilter{
 		Limit:  limit,
